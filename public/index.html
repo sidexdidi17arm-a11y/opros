@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 ПАО "Россети-Юг" - Статистика опроса по ФЭС</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Modal -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-container">
+            <div class="login-logo">
+                <i class="fas fa-chart-network"></i>
+            </div>
+            <h2 class="login-title">Статистика опроса по ФЭС</h2>
+            <p class="login-subtitle">Войдите в систему для доступа к статистике опроса приборов учёта</p>
+            
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="username">
+                        <i class="fas fa-user"></i>
+                        Логин
+                    </label>
+                    <select id="username" class="form-control" required>
+                        <option value="">Выберите пользователя</option>
+                        <option value="admin">Администратор</option>
+                        <option value="viewer">Наблюдатель</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i>
+                        Пароль
+                    </label>
+                    <input type="password" id="password" class="form-control" placeholder="Введите пароль">
+                </div>
+                
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> Войти в систему
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer" style="display: none;">
+        <!-- User Info -->
+        <div class="user-info" id="userInfo">
+            <div class="user-avatar" id="userAvatar">А</div>
+            <div class="user-details">
+                <div class="user-name" id="userName">Пользователь</div>
+                <div class="user-role" id="userRole">Роль</div>
+            </div>
+            <button class="logout-btn" id="logoutBtn" title="Выйти из системы">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>
+                    <i class="fas fa-chart-network"></i>
+                    ПАО "Россети-Юг"
+                </h1>
+                <div class="header-subtitle">Статистика опроса по ФЭС</div>
+                <div class="header-description">Еженедельный мониторинг показателей опроса приборов учёта. ПС РЭС не учитывается в общих показателях.</div>
+            </div>
+        </header>
+
+        <!-- Tabs Navigation -->
+        <div class="tabs" id="tabsContainer">
+            <!-- Табы будут добавляться динамически -->
+        </div>
+
+        <!-- Statistics Tab -->
+        <div id="stats" class="tab-content" style="display: none;">
+            <!-- Statistics Cards -->
+            <div class="stats-grid" id="statsGrid">
+                <!-- Cards will be added dynamically -->
+            </div>
+
+            <!-- Detailed Table -->
+            <div class="detailed-comparison">
+                <h3 class="section-title">
+                    <i class="fas fa-table"></i>
+                    Подробные данные за неделю
+                    <span id="currentWeekLabel" style="font-size: 16px; color: var(--gray); font-weight: 600;"></span>
+                </h3>
+                <div class="table-container">
+                    <table class="comparison-table" id="detailedTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">№</th>
+                                <th>ФЭС</th>
+                                <th>Всего ПУ</th>
+                                <th>В опросе</th>
+                                <th>Не в опросе</th>
+                                <th>% опроса</th>
+                                <th>Прогресс</th>
+                                <th>СПОДЭС ПУ</th>
+                                <th>СПОДЭС в опросе</th>
+                                <th>СПОДЭС не в опросе</th>
+                                <th>% СПОДЭС</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailedTableBody">
+                            <!-- Data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <h4 class="chart-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Динамика процента опроса по ФЭС (без ПС РЭС)
+                </h4>
+                <div class="chart-wrapper">
+                    <canvas id="verticalChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Data Tab -->
+        <div id="input" class="tab-content" style="display: none;">
+            <div class="input-section">
+                <h3 class="section-title">
+                    <i class="fas fa-database"></i>
+                    Ввод данных за неделю
+                </h3>
+                
+                <div class="form-group">
+                    <label for="dateInput">
+                        <i class="far fa-calendar-alt"></i>
+                        Дата отчёта (неделя):
+                    </label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-calendar input-icon"></i>
+                        <input type="date" id="dateInput" class="form-control" required>
+                    </div>
+                    <div class="text-muted" style="margin-top: 5px; font-size: 13px;">
+                        Укажите дату окончания недели (обычно суббота)
+                    </div>
+                </div>
+
+                <h4 style="margin: 30px 0 20px; color: var(--dark); font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-bolt"></i>
+                    Данные по ФЭС
+                </h4>
+                
+                <div class="input-grid" id="resInputGrid">
+                    <!-- Динамически генерируется -->
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="saveDataBtn">
+                        <i class="fas fa-save"></i> Сохранить данные
+                    </button>
+                    <button class="btn btn-outline" id="clearFormBtn">
+                        <i class="fas fa-eraser"></i> Очистить форму
+                    </button>
+                    <button class="btn btn-warning" id="autofillBtn">
+                        <i class="fas fa-magic"></i> Заполнить из предыдущих
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history" class="tab-content" style="display: none;">
+            <div class="history-section">
+                <h3 class="section-title">
+                    <i class="fas fa-history"></i>
+                    История всех введённых данных
+                </h3>
+                
+                <div class="btn-group">
+                    <button class="btn btn-success" id="exportExcelBtn">
+                        <i class="fas fa-file-excel"></i> Экспорт в Excel
+                    </button>
+                    <button class="btn btn-danger" id="clearAllDataBtn">
+                        <i class="fas fa-trash-alt"></i> Очистить все данные
+                    </button>
+                </div>
+
+                <div id="historyContainer" class="mt-30">
+                    <!-- History will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="reports" class="tab-content" style="display: none;">
+            <div class="input-section">
+                <h3 class="section-title">
+                    <i class="fas fa-file-chart-line"></i>
+                    Генерация отчётов
+                </h3>
+                
+                <div class="reports-grid">
+                    <div class="report-card">
+                        <div class="stat-header">
+                            <div class="stat-title">
+                                <div class="stat-icon" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: var(--primary);">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div>
+                                    <div>Еженедельный отчёт</div>
+                                    <div class="stat-date" id="weeklyReportDate">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding: 20px 0;">
+                            <p style="color: var(--gray); margin-bottom: 20px; font-size: 14px; line-height: 1.5;">
+                                Детальный анализ показателей за выбранную неделю с графиками и сравнением
+                            </p>
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="reportWeekSelect">
+                                    <i class="fas fa-calendar-week"></i>
+                                    Выберите неделю:
+                                </label>
+                                <select id="reportWeekSelect" class="form-control">
+                                    <option value="">Выберите неделю...</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-outline" id="generateWeeklyReport">
+                                <i class="fas fa-download"></i> Сформировать отчёт
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="report-card">
+                        <div class="stat-header">
+                            <div class="stat-title">
+                                <div class="stat-icon" style="background: linear-gradient(135deg, #fef3c7, #fde68a); color: var(--warning);">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <div>
+                                    <div>Аналитический отчёт</div>
+                                    <div class="stat-date" id="analyticalReportDate">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding: 20px 0;">
+                            <p style="color: var(--gray); margin-bottom: 20px; font-size: 14px; line-height: 1.5;">
+                                Глубокий анализ трендов за 4 недели и рекомендации по улучшению показателей
+                            </p>
+                            <button class="btn btn-outline" id="generateAnalyticalReport">
+                                <i class="fas fa-download"></i> Сформировать отчёт
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Tab -->
+        <div id="statistics" class="tab-content" style="display: none;">
+            <div class="input-section">
+                <h3 class="section-title">
+                    <i class="fas fa-chart-pie"></i>
+                    В статистику
+                </h3>
+                
+                <div class="reports-grid">
+                    <div class="report-card">
+                        <div class="stat-header">
+                            <div class="stat-title">
+                                <div class="stat-icon" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: var(--primary);">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div>
+                                    <div>Отчёт по изменениям ПУ</div>
+                                    <div class="stat-date" id="changesReportDate">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding: 20px 0;">
+                            <p style="color: var(--gray); margin-bottom: 20px; font-size: 14px; line-height: 1.5;">
+                                Анализ изменений количества приборов учёта за прошедшую неделю
+                            </p>
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="changesWeekSelect">
+                                    <i class="fas fa-calendar-week"></i>
+                                    Выберите неделю для сравнения:
+                                </label>
+                                <select id="changesWeekSelect" class="form-control">
+                                    <option value="">Выберите неделю...</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-outline" id="generateChangesReport">
+                                <i class="fas fa-download"></i> Сформировать отчёт
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="report-card">
+                        <div class="stat-header">
+                            <div class="stat-title">
+                                <div class="stat-icon" style="background: linear-gradient(135deg, #fef3c7, #fde68a); color: var(--warning);">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <div>
+                                    <div>Сравнительный отчёт</div>
+                                    <div class="stat-date" id="comparisonReportDate">—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding: 20px 0;">
+                            <p style="color: var(--gray); margin-bottom: 20px; font-size: 14px; line-height: 1.5;">
+                                Сравнение двух выбранных недель для анализа динамики изменений
+                            </p>
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label for="comparisonWeek1Select">
+                                    <i class="fas fa-calendar-week"></i>
+                                    Неделя 1:
+                                </label>
+                                <select id="comparisonWeek1Select" class="form-control">
+                                    <option value="">Выберите неделю...</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="comparisonWeek2Select">
+                                    <i class="fas fa-calendar-week"></i>
+                                    Неделя 2:
+                                </label>
+                                <select id="comparisonWeek2Select" class="form-control">
+                                    <option value="">Выберите неделю...</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-outline" id="generateComparisonReport">
+                                <i class="fas fa-download"></i> Сформировать отчёт
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
