@@ -33,7 +33,7 @@ class SurveyStatisticsApp {
         this.verticalChart = null;
         this.currentUser = null;
         this.apiBaseUrl = window.location.hostname === 'localhost' ? 
-            'http://localhost:3000/api' : '/api';
+            'http://localhost:3000/api' : 'https://opros-fes1.onrender.com/api';
         this.init();
     }
     
