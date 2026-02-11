@@ -1653,12 +1653,28 @@
             },
             
             getApiBaseUrl: function() {
+                // 1) Явно заданный адрес API (если админ сохранил его в localStorage)
+                try {
+                    const saved = localStorage.getItem(AppConfig.STORAGE_KEYS.API_BASE_URL);
+                    if (saved && typeof saved === 'string' && saved.trim()) {
+                        return saved.trim().replace(/\/+$/, '');
+                    }
+                } catch (_) {}
+
+                // 2) Локальная разработка
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                     return 'http://localhost:3000';
                 }
-                return 'https://opros-fes1.onrender.com';
+
+                // 3) Прод: если API и фронт живут на одном домене — используем текущий origin
+                // (Это самый надёжный вариант для Render, когда Express отдаёт и public/, и /api/*)
+                if (window.location.origin) {
+                    return window.location.origin.replace(/\/+$/, '');
+                }
+
+                // 4) Фолбек
+                return 'https://opros-fes.onrender.com';
             },
-            
             API_ENDPOINTS: {
                 DATA: '/api/data',
                 STATS: '/api/stats',
@@ -3612,28 +3628,7 @@
                         return;
                     }
                     
-                    // Приводим резервную копию к поддерживаемому формату
-                    // Поддерживаем:
-                    // 1) { version, data: [...] } — стандартный формат этого приложения
-                    // 2) [...] — просто массив недель
-                    // 3) { weeks: [...] } или { weeklyData: [...] } — альтернативные экспорты
-                    let weeksArray = null;
-                    if (Array.isArray(backupData)) {
-                        weeksArray = backupData;
-                        backupData = { version: 'array-only', data: weeksArray };
-                    } else if (backupData && Array.isArray(backupData.data)) {
-                        weeksArray = backupData.data;
-                    } else if (backupData && Array.isArray(backupData.weeks)) {
-                        weeksArray = backupData.weeks;
-                        backupData = { version: backupData.version || 'weeks', data: weeksArray };
-                    } else if (backupData && Array.isArray(backupData.weeklyData)) {
-                        weeksArray = backupData.weeklyData;
-                        backupData = { version: backupData.version || 'weeklyData', data: weeksArray };
-                    }
-
-                    // Базовая проверка структуры недель
-                    const isValidWeek = (w) => w && typeof w === 'object' && typeof w.date === 'string' && Array.isArray(w.data);
-                    if (!weeksArray || !Array.isArray(weeksArray) || !weeksArray.every(isValidWeek)) {
+                    if (!backupData.version || !backupData.data || !Array.isArray(backupData.data)) {
                         this.showNotification('Ошибка: неверный формат файла резервной копии', 'danger');
                         return;
                     }
