@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -844,6 +844,11 @@
             color: white;
         }
 
+        .btn-info {
+            background: linear-gradient(135deg, var(--info), #2563eb);
+            color: white;
+        }
+
         .btn-sm {
             padding: 8px 16px;
             font-size: 13px;
@@ -933,6 +938,11 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
         /* Server Status */
         .server-status {
             position: fixed;
@@ -1009,9 +1019,15 @@
 
         .export-options {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .export-options {
+                grid-template-columns: 1fr;
+            }
         }
 
         .export-option {
@@ -1033,6 +1049,35 @@
             font-size: 36px;
             color: var(--primary);
             margin-bottom: 15px;
+        }
+
+        .restore-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 16px 28px;
+            background: white;
+            border: 2px dashed var(--primary);
+            border-radius: 10px;
+            color: var(--primary);
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 15px;
+        }
+
+        .file-input-label:hover {
+            background: var(--primary);
+            color: white;
+            border-style: solid;
         }
 
         /* Responsive */
@@ -1246,16 +1291,12 @@
         </header>
 
         <!-- Tabs Navigation -->
-        <div class="tabs" id="tabsContainer">
-            <!-- Табы будут добавляться динамически в зависимости от роли -->
-        </div>
+        <div class="tabs" id="tabsContainer"></div>
 
         <!-- Statistics Tab -->
         <div id="stats" class="tab-content" style="display: none;">
             <!-- Statistics Cards -->
-            <div class="stats-grid" id="statsGrid">
-                <!-- Last 3 weeks + best performance card + changes card -->
-            </div>
+            <div class="stats-grid" id="statsGrid"></div>
 
             <!-- Detailed Table -->
             <div class="detailed-comparison">
@@ -1281,21 +1322,7 @@
                                 <th>% СПОДЭС</th>
                             </tr>
                         </thead>
-                        <tbody id="detailedTableBody">
-                            <tr>
-                                <td colspan="11" class="text-center">
-                                    <div class="empty-state" style="padding: 40px 20px;">
-                                        <div class="empty-state-icon">
-                                            <i class="fas fa-database"></i>
-                                        </div>
-                                        <div class="empty-state-title">Нет данных</div>
-                                        <div class="empty-state-description">
-                                            Добавьте данные на вкладке "Ввод данных" для отображения статистики
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
+                        <tbody id="detailedTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -1339,9 +1366,7 @@
                     Данные по ФЭС
                 </h4>
                 
-                <div class="input-grid" id="resInputGrid">
-                    <!-- Динамически генерируется -->
-                </div>
+                <div class="input-grid" id="resInputGrid"></div>
 
                 <div class="btn-group">
                     <button class="btn btn-primary" id="saveDataBtn">
@@ -1374,17 +1399,7 @@
                     </button>
                 </div>
 
-                <div id="historyContainer" class="mt-30">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">
-                            <i class="fas fa-database"></i>
-                        </div>
-                        <div class="empty-state-title">История данных пуста</div>
-                        <div class="empty-state-description">
-                            Добавьте данные на вкладке "Ввод данных" чтобы они появились в истории
-                        </div>
-                    </div>
-                </div>
+                <div id="historyContainer" class="mt-30"></div>
             </div>
         </div>
 
@@ -1540,64 +1555,41 @@
         <div id="export" class="tab-content" style="display: none;">
             <div class="export-section">
                 <h3 class="section-title">
-                    <i class="fas fa-file-export"></i>
-                    Экспорт данных
+                    <i class="fas fa-database"></i>
+                    Управление данными
                 </h3>
                 
-                <p style="color: var(--gray); margin-bottom: 25px; font-size: 15px; line-height: 1.5;">
-                    Экспортируйте все данные из базы данных в различных форматах для дальнейшего анализа или архивирования.
-                </p>
-                
                 <div class="export-options">
-                    <div class="export-option">
+                    <!-- Резервная копия - только для администратора -->
+                    <div class="export-option" id="backupOption">
                         <div class="export-icon">
-                            <i class="fas fa-file-csv"></i>
-                        </div>
-                        <h4 style="color: var(--dark); margin-bottom: 10px;">CSV формат</h4>
-                        <p style="color: var(--gray); font-size: 14px; margin-bottom: 20px;">
-                            Идеально для импорта в Excel, Google Sheets и другие табличные редакторы
-                        </p>
-                        <button class="btn btn-primary" id="exportCSVBtn">
-                            <i class="fas fa-download"></i> Экспорт в CSV
-                        </button>
-                    </div>
-                    
-                    <div class="export-option">
-                        <div class="export-icon">
-                            <i class="fas fa-file-code"></i>
-                        </div>
-                        <h4 style="color: var(--dark); margin-bottom: 10px;">JSON формат</h4>
-                        <p style="color: var(--gray); font-size: 14px; margin-bottom: 20px;">
-                            Полная структура данных для программирования и интеграции с другими системами
-                        </p>
-                        <button class="btn btn-primary" id="exportJSONBtn">
-                            <i class="fas fa-download"></i> Экспорт в JSON
-                        </button>
-                    </div>
-                    
-                    <div class="export-option">
-                        <div class="export-icon">
-                            <i class="fas fa-print"></i>
-                        </div>
-                        <h4 style="color: var(--dark); margin-bottom: 10px;">Печать отчёта</h4>
-                        <p style="color: var(--gray); font-size: 14px; margin-bottom: 20px;">
-                            Распечатать полный отчет со всеми данными за выбранный период
-                        </p>
-                        <button class="btn btn-outline" id="printReportBtn">
-                            <i class="fas fa-print"></i> Распечатать
-                        </button>
-                    </div>
-                    
-                    <div class="export-option">
-                        <div class="export-icon">
-                            <i class="fas fa-database"></i>
+                            <i class="fas fa-save"></i>
                         </div>
                         <h4 style="color: var(--dark); margin-bottom: 10px;">Резервная копия</h4>
                         <p style="color: var(--gray); font-size: 14px; margin-bottom: 20px;">
                             Создать полную резервную копию всех данных для восстановления
                         </p>
                         <button class="btn btn-success" id="backupDataBtn">
-                            <i class="fas fa-save"></i> Создать backup
+                            <i class="fas fa-download"></i> Создать backup
+                        </button>
+                    </div>
+                    
+                    <!-- Восстановление из резервной копии - только для администратора -->
+                    <div class="export-option" id="restoreOption">
+                        <div class="export-icon">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <h4 style="color: var(--dark); margin-bottom: 10px;">Восстановление</h4>
+                        <p style="color: var(--gray); font-size: 14px; margin-bottom: 20px;">
+                            Восстановить данные из ранее созданной резервной копии
+                        </p>
+                        <input type="file" id="restoreFileInput" class="file-input" accept=".json,application/json">
+                        <label for="restoreFileInput" class="file-input-label" id="restoreFileLabel">
+                            <i class="fas fa-folder-open"></i> Выбрать файл
+                        </label>
+                        <span id="selectedFileName" style="display: block; margin-bottom: 10px; font-size: 13px; color: var(--gray);"></span>
+                        <button class="btn btn-warning" id="restoreFromBackupBtn" disabled>
+                            <i class="fas fa-undo-alt"></i> Восстановить данные
                         </button>
                     </div>
                 </div>
@@ -1648,7 +1640,7 @@
                     name: 'Администратор',
                     role: 'admin',
                     passwordHash: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', // SHA-256 hash of 'admin123'
-                    permissions: ['view', 'edit', 'delete', 'export', 'reports', 'input']
+                    permissions: ['view', 'edit', 'delete', 'export', 'reports', 'input', 'backup', 'restore']
                 },
                 viewer: {
                     name: 'Наблюдатель',
@@ -1663,15 +1655,11 @@
                 API_BASE_URL: 'surveyAppApiUrl_v1'
             },
             
-            // Автоматическое определение URL сервера
             getApiBaseUrl: function() {
-                // Для localhost разработки
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                     return 'http://localhost:3000';
                 }
-                // Для production на Render.com - замените на ваш URL
                 return 'https://opros-fes1.onrender.com';
-                return window.location.origin; // Использует текущий origin
             },
             
             API_ENDPOINTS: {
@@ -1734,7 +1722,10 @@
                 
                 if (statusElement && statusText) {
                     statusElement.className = `server-status ${status}`;
-                    statusElement.querySelector('.status-dot').className = `status-dot ${status}`;
+                    const statusDot = statusElement.querySelector('.status-dot');
+                    if (statusDot) {
+                        statusDot.className = `status-dot ${status}`;
+                    }
                     statusText.textContent = message || this.getStatusMessage(status);
                 }
             }
@@ -1749,7 +1740,6 @@
             }
             
             async startHealthCheck() {
-                // Проверяем здоровье сервера каждые 30 секунд
                 setInterval(async () => {
                     try {
                         const response = await fetch(`${this.apiBaseUrl}${AppConfig.API_ENDPOINTS.HEALTH}`, {
@@ -1824,7 +1814,12 @@
                 this.updateUserInfo();
                 this.updateUIForUserRole();
                 this.updateTabsForUserRole();
-                this.showTab({ currentTarget: document.querySelector('[data-tab="stats"]') });
+                
+                // Показываем вкладку статистики по умолчанию
+                const statsTab = document.querySelector('[data-tab="stats"]');
+                if (statsTab) {
+                    this.showTab({ currentTarget: statsTab });
+                }
             }
             
             updateUserInfo() {
@@ -1853,7 +1848,6 @@
                 
                 const commonTabs = [
                     { id: 'stats', icon: 'chart-bar', label: 'Статистика по ФЭС' },
-                    { id: 'export', icon: 'file-export', label: 'Экспорт данных' },
                     { id: 'history', icon: 'history', label: 'История' },
                     { id: 'reports', icon: 'file-chart-line', label: 'Отчёты' },
                     { id: 'statistics', icon: 'chart-pie', label: 'В статистику' }
@@ -1861,7 +1855,8 @@
                 
                 if (this.currentUser?.role === 'admin') {
                     const adminTabs = [
-                        { id: 'input', icon: 'database', label: 'Ввод данных' }
+                        { id: 'input', icon: 'database', label: 'Ввод данных' },
+                        { id: 'export', icon: 'database', label: 'Управление данными' }
                     ];
                     commonTabs.splice(1, 0, ...adminTabs);
                 }
@@ -1886,17 +1881,42 @@
             updateUIForUserRole() {
                 const canEdit = this.currentUser?.permissions?.includes('edit');
                 const canDelete = this.currentUser?.permissions?.includes('delete');
-                const canExport = this.currentUser?.permissions?.includes('export');
+                const canBackup = this.currentUser?.permissions?.includes('backup');
+                const canRestore = this.currentUser?.permissions?.includes('restore');
+                
+                // Управление видимостью элементов в зависимости от роли
+                const backupOption = document.getElementById('backupOption');
+                const restoreOption = document.getElementById('restoreOption');
+                
+                if (backupOption) {
+                    backupOption.style.display = canBackup ? 'block' : 'none';
+                }
+                
+                if (restoreOption) {
+                    restoreOption.style.display = canRestore ? 'block' : 'none';
+                }
+                
+                // Адаптация сетки экспорта
+                const exportOptions = document.querySelector('.export-options');
+                if (exportOptions) {
+                    const visibleOptions = [];
+                    if (canBackup) visibleOptions.push(backupOption);
+                    if (canRestore) visibleOptions.push(restoreOption);
+                    
+                    if (visibleOptions.length === 1) {
+                        exportOptions.style.gridTemplateColumns = '1fr';
+                    } else {
+                        exportOptions.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                    }
+                }
                 
                 if (!canEdit) {
                     const saveBtn = document.getElementById('saveDataBtn');
-                    const clearBtn = document.getElementById('clearAllDataBtn');
                     const autofillBtn = document.getElementById('autofillBtn');
                     if (saveBtn) saveBtn.classList.add('disabled');
-                    if (clearBtn) clearBtn.classList.add('disabled');
                     if (autofillBtn) autofillBtn.classList.add('disabled');
                     
-                    document.querySelectorAll('.form-control').forEach(input => {
+                    document.querySelectorAll('#input .form-control').forEach(input => {
                         if (input.type !== 'date') {
                             input.disabled = true;
                         }
@@ -1905,16 +1925,7 @@
                 
                 if (!canDelete) {
                     const clearAllBtn = document.getElementById('clearAllDataBtn');
-                    if (clearAllBtn) clearAllBtn.disabled = true;
-                }
-                
-                if (!canExport) {
-                    const exportExcelBtn = document.getElementById('exportExcelBtn');
-                    const exportCSVBtn = document.getElementById('exportCSVBtn');
-                    const exportJSONBtn = document.getElementById('exportJSONBtn');
-                    if (exportExcelBtn) exportExcelBtn.disabled = true;
-                    if (exportCSVBtn) exportCSVBtn.disabled = true;
-                    if (exportJSONBtn) exportJSONBtn.disabled = true;
+                    if (clearAllBtn) clearAllBtn.style.display = 'none';
                 }
             }
             
@@ -2004,8 +2015,6 @@
                     logoutBtn.addEventListener('click', () => this.logout());
                 }
                 
-                // Вкладки обрабатываются динамически в updateTabsForUserRole()
-                
                 // Ввод данных
                 const saveDataBtn = document.getElementById('saveDataBtn');
                 if (saveDataBtn) {
@@ -2033,25 +2042,20 @@
                     clearAllDataBtn.addEventListener('click', () => this.clearAllData());
                 }
                 
-                // Экспорт данных
-                const exportCSVBtn = document.getElementById('exportCSVBtn');
-                if (exportCSVBtn) {
-                    exportCSVBtn.addEventListener('click', () => this.exportToCSV());
-                }
-                
-                const exportJSONBtn = document.getElementById('exportJSONBtn');
-                if (exportJSONBtn) {
-                    exportJSONBtn.addEventListener('click', () => this.exportToJSON());
-                }
-                
-                const printReportBtn = document.getElementById('printReportBtn');
-                if (printReportBtn) {
-                    printReportBtn.addEventListener('click', () => this.printReport());
-                }
-                
+                // Резервное копирование и восстановление
                 const backupDataBtn = document.getElementById('backupDataBtn');
                 if (backupDataBtn) {
                     backupDataBtn.addEventListener('click', () => this.createBackup());
+                }
+                
+                const restoreFileInput = document.getElementById('restoreFileInput');
+                if (restoreFileInput) {
+                    restoreFileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+                }
+                
+                const restoreFromBackupBtn = document.getElementById('restoreFromBackupBtn');
+                if (restoreFromBackupBtn) {
+                    restoreFromBackupBtn.addEventListener('click', () => this.restoreFromBackup());
                 }
                 
                 // Отчеты
@@ -2083,7 +2087,6 @@
             }
             
             showTab(event) {
-                event.preventDefault();
                 const tabName = event.currentTarget.dataset.tab;
                 
                 document.querySelectorAll('.tab-content').forEach(tab => {
@@ -2121,6 +2124,7 @@
                         break;
                     case 'export':
                         this.updateDatabaseInfo();
+                        this.updateUIForUserRole();
                         break;
                 }
             }
@@ -2413,13 +2417,11 @@
                         return;
                     }
     
-                    // Показываем индикатор загрузки
                     const saveBtn = document.getElementById('saveDataBtn');
                     const originalText = saveBtn.innerHTML;
                     saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Сохранение...';
                     saveBtn.disabled = true;
     
-                    // Сохранение на сервере
                     const response = await fetch(`${this.apiBaseUrl}${AppConfig.API_ENDPOINTS.DATA}`, {
                         method: 'POST',
                         headers: {
@@ -2428,7 +2430,6 @@
                         body: JSON.stringify(weekData)
                     });
 
-                    // Восстанавливаем кнопку
                     saveBtn.innerHTML = originalText;
                     saveBtn.disabled = false;
 
@@ -2457,7 +2458,6 @@
                     console.error('Ошибка сохранения данных:', error);
                     this.showNotification(`Ошибка сохранения: ${error.message}`, 'danger');
                     
-                    // Восстанавливаем кнопку при ошибке
                     const saveBtn = document.getElementById('saveDataBtn');
                     if (saveBtn) {
                         saveBtn.innerHTML = '<i class="fas fa-save"></i> Сохранить данные на сервер';
@@ -2543,7 +2543,6 @@
                     
                     container.innerHTML = '';
                     
-                    // Текущая неделя с лучшими/худшими показателями
                     const currentWeek = this.weeklyData[0];
                     const bestRES = this.findBestRES(currentWeek);
                     const worstRES = this.findWorstRES(currentWeek);
@@ -2551,7 +2550,6 @@
                     const card1 = this.createCurrentWeekCard(currentWeek, bestRES, worstRES);
                     container.appendChild(card1);
                     
-                    // Предыдущие 2 недели
                     const lastTwoWeeks = this.weeklyData.slice(1, 3);
                     
                     lastTwoWeeks.forEach((week, index) => {
@@ -2561,7 +2559,6 @@
                         container.appendChild(card);
                     });
                     
-                    // Карточка с лучшими показателями за все время
                     if (this.weeklyData.length > 1) {
                         const bestWeek = this.findBestWeek();
                         if (bestWeek) {
@@ -2572,7 +2569,6 @@
                         }
                     }
                     
-                    // Карточка с изменениями количества ПУ за прошедшую неделю
                     if (this.weeklyData.length >= 2) {
                         const changesCard = this.createChangesCard();
                         container.appendChild(changesCard);
@@ -2587,7 +2583,6 @@
                 const card = document.createElement('div');
                 card.className = 'stat-card';
                 
-                // Расчет показателей без учета ПС РЭС
                 const filteredData = weekData.data.filter(item => !item.isPsRes);
                 const totalSurvey = filteredData.reduce((sum, item) => sum + item.survey, 0);
                 const totalPU = filteredData.reduce((sum, item) => sum + item.total, 0);
@@ -2838,22 +2833,18 @@
                 const currentWeek = this.weeklyData[0];
                 const previousWeek = this.weeklyData[1];
                 
-                // Сравниваем общее количество ПУ
                 const currentTotal = currentWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.total, 0);
                 const previousTotal = previousWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.total, 0);
                 const totalChange = currentTotal - previousTotal;
                 
-                // Сравниваем количество ПУ в опросе
                 const currentSurvey = currentWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.survey, 0);
                 const previousSurvey = previousWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.survey, 0);
                 const surveyChange = currentSurvey - previousSurvey;
                 
-                // Сравниваем количество СПОДЭС ПУ
                 const currentSpoTotal = currentWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.totalSpo, 0);
                 const previousSpoTotal = previousWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.totalSpo, 0);
                 const spoTotalChange = currentSpoTotal - previousSpoTotal;
                 
-                // Сравниваем количество СПОДЭС в опросе
                 const currentSpoSurvey = currentWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.surveySpo, 0);
                 const previousSpoSurvey = previousWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.surveySpo, 0);
                 const spoSurveyChange = currentSpoSurvey - previousSpoSurvey;
@@ -3000,7 +2991,11 @@
                 if (!weekData) return;
                 
                 this.updateDetailedTable(date);
-                this.showTab({ currentTarget: document.querySelector('[data-tab="stats"]') });
+                
+                const statsTab = document.querySelector('[data-tab="stats"]');
+                if (statsTab) {
+                    this.showTab({ currentTarget: statsTab });
+                }
                 
                 const weekLabel = document.getElementById('currentWeekLabel');
                 if (weekLabel) {
@@ -3056,7 +3051,6 @@
                     const filteredData = weekData.data.filter(item => !item.isPsRes);
                     const sortedData = [...filteredData].sort((a, b) => b.percent - a.percent);
                     
-                    // Добавляем строки для обычных ФЭС
                     sortedData.forEach((item, index) => {
                         const res = AppConfig.RES_LIST.find(r => r.id === item.id);
                         
@@ -3091,7 +3085,6 @@
                         tbody.appendChild(row);
                     });
                     
-                    // Добавляем строку для ПС РЭС
                     const psResData = weekData.data.find(item => item.isPsRes);
                     if (psResData) {
                         const res = AppConfig.RES_LIST.find(r => r.id === 'ps');
@@ -3164,11 +3157,9 @@
                     
                     const ctx = canvas.getContext('2d');
                     
-                    // Берем последние 4 недели для графика
                     const chartData = this.weeklyData.slice(0, 4).reverse();
                     const dates = chartData.map(d => this.formatDate(new Date(d.date)));
                     
-                    // Подготовка данных для вертикальных графиков (группированных баров) без ПС РЭС
                     const resNames = AppConfig.RES_LIST.filter(res => res.id !== 'ps').map(res => res.name);
                     const datasets = chartData.map((week, weekIndex) => {
                         const data = AppConfig.RES_LIST.filter(res => res.id !== 'ps').map(res => {
@@ -3324,10 +3315,16 @@
                             const table = dateGroup.querySelector('.history-table');
                             if (table.style.display === 'none' || table.style.display === '') {
                                 table.style.display = 'table';
-                                dateHeader.querySelector('i').className = 'far fa-calendar-minus';
+                                const icon = dateHeader.querySelector('.history-date-title i');
+                                if (icon) {
+                                    icon.className = 'far fa-calendar-minus';
+                                }
                             } else {
                                 table.style.display = 'none';
-                                dateHeader.querySelector('i').className = 'far fa-calendar-alt';
+                                const icon = dateHeader.querySelector('.history-date-title i');
+                                if (icon) {
+                                    icon.className = 'far fa-calendar-alt';
+                                }
                             }
                         });
                         
@@ -3458,7 +3455,6 @@
                     const latestDate = this.weeklyData[0].date;
                     if (weeklyDate) weeklyDate.textContent = this.formatDate(new Date(latestDate));
                     
-                    // Заполняем выпадающий список
                     if (weekSelect) {
                         weekSelect.innerHTML = '<option value="">Выберите неделю...</option>';
                         this.weeklyData.forEach(week => {
@@ -3477,7 +3473,6 @@
                     if (weekSelect) weekSelect.innerHTML = '<option value="">Нет данных</option>';
                 }
                 
-                // Для аналитического отчета показываем диапазон
                 if (this.weeklyData.length >= 4) {
                     const firstDate = this.weeklyData[3].date;
                     const lastDate = this.weeklyData[0].date;
@@ -3500,7 +3495,6 @@
                     const latestDate = this.weeklyData[0].date;
                     if (changesDate) changesDate.textContent = this.formatDate(new Date(latestDate));
                     
-                    // Заполняем выпадающие списки
                     [changesSelect, comparisonWeek1Select, comparisonWeek2Select].forEach(select => {
                         if (select) {
                             select.innerHTML = '<option value="">Выберите неделю...</option>';
@@ -3526,7 +3520,6 @@
                     });
                 }
                 
-                // Для сравнения показываем диапазон
                 if (this.weeklyData.length >= 2) {
                     const firstDate = this.weeklyData[1].date;
                     const lastDate = this.weeklyData[0].date;
@@ -3545,60 +3538,6 @@
                 }
             }
             
-            async exportToCSV() {
-                try {
-                    if (this.serverStatus !== 'online') {
-                        this.showNotification('Сервер недоступен. Проверьте подключение.', 'danger');
-                        return;
-                    }
-
-                    if (!this.currentUser?.permissions?.includes('export')) {
-                        this.showNotification('У вас нет прав на экспорт данных!', 'warning');
-                        return;
-                    }
-                    
-                    if (this.weeklyData.length === 0) {
-                        this.showNotification('Нет данных для экспорта!', 'warning');
-                        return;
-                    }
-                    
-                    // Открываем новое окно/вкладку для скачивания CSV
-                    window.open(`${this.apiBaseUrl}${AppConfig.API_ENDPOINTS.EXPORT_CSV}`, '_blank');
-                    
-                    this.showNotification('Экспорт CSV запущен', 'success');
-                } catch (error) {
-                    console.error('Ошибка экспорта CSV:', error);
-                    this.showNotification('Ошибка экспорта данных в CSV', 'danger');
-                }
-            }
-            
-            async exportToJSON() {
-                try {
-                    if (this.serverStatus !== 'online') {
-                        this.showNotification('Сервер недоступен. Проверьте подключение.', 'danger');
-                        return;
-                    }
-
-                    if (!this.currentUser?.permissions?.includes('export')) {
-                        this.showNotification('У вас нет прав на экспорт данных!', 'warning');
-                        return;
-                    }
-                    
-                    if (this.weeklyData.length === 0) {
-                        this.showNotification('Нет данных для экспорта!', 'warning');
-                        return;
-                    }
-                    
-                    // Открываем новое окно/вкладку для скачивания JSON
-                    window.open(`${this.apiBaseUrl}${AppConfig.API_ENDPOINTS.EXPORT_JSON}`, '_blank');
-                    
-                    this.showNotification('Экспорт JSON запущен', 'success');
-                } catch (error) {
-                    console.error('Ошибка экспорта JSON:', error);
-                    this.showNotification('Ошибка экспорта данных в JSON', 'danger');
-                }
-            }
-            
             exportToExcel() {
                 try {
                     if (!this.currentUser?.permissions?.includes('export')) {
@@ -3611,13 +3550,10 @@
                         return;
                     }
                     
-                    // Создаем простой CSV файл (старая версия для обратной совместимости)
                     let csvContent = "data:text/csv;charset=utf-8,";
                     
-                    // Заголовки
                     csvContent += "Дата,ФЭС,Всего ПУ,ПУ в опросе,ПУ не в опросе,% опроса,СПОДЭС ПУ,СПОДЭС в опросе,СПОДЭС не в опросе,% СПОДЭС,Примечание\n";
                     
-                    // Данные
                     this.weeklyData.forEach(week => {
                         const formattedDate = this.formatDate(new Date(week.date));
                         week.data.forEach(item => {
@@ -3654,24 +3590,13 @@
                 }
             }
             
-            printReport() {
-                window.print();
-                this.showNotification('Подготовка к печати...', 'info');
-            }
-            
             async createBackup() {
                 try {
-                    if (this.serverStatus !== 'online') {
-                        this.showNotification('Сервер недоступен. Проверьте подключение.', 'danger');
-                        return;
-                    }
-
-                    if (!this.currentUser?.permissions?.includes('export')) {
+                    if (!this.currentUser?.permissions?.includes('backup')) {
                         this.showNotification('У вас нет прав на создание резервных копий!', 'warning');
                         return;
                     }
                     
-                    // Создаем резервную копию в формате JSON
                     const backupData = {
                         version: '2.0.0',
                         exportedAt: new Date().toISOString(),
@@ -3693,6 +3618,113 @@
                 } catch (error) {
                     console.error('Ошибка создания резервной копии:', error);
                     this.showNotification('Ошибка создания резервной копии', 'danger');
+                }
+            }
+            
+            handleFileSelect(event) {
+                const file = event.target.files[0];
+                const fileNameElement = document.getElementById('selectedFileName');
+                const restoreBtn = document.getElementById('restoreFromBackupBtn');
+                
+                if (file) {
+                    if (fileNameElement) {
+                        fileNameElement.textContent = `Выбран файл: ${file.name}`;
+                    }
+                    if (restoreBtn) {
+                        restoreBtn.disabled = false;
+                    }
+                } else {
+                    if (fileNameElement) {
+                        fileNameElement.textContent = '';
+                    }
+                    if (restoreBtn) {
+                        restoreBtn.disabled = true;
+                    }
+                }
+            }
+            
+            async restoreFromBackup() {
+                try {
+                    if (!this.currentUser?.permissions?.includes('restore')) {
+                        this.showNotification('У вас нет прав на восстановление данных!', 'warning');
+                        return;
+                    }
+                    
+                    const fileInput = document.getElementById('restoreFileInput');
+                    
+                    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                        this.showNotification('Пожалуйста, выберите файл резервной копии!', 'warning');
+                        return;
+                    }
+                    
+                    if (!confirm('ВНИМАНИЕ! Восстановление данных из резервной копии заменит ВСЕ текущие данные в базе данных.\n\nВы уверены, что хотите продолжить?')) {
+                        return;
+                    }
+                    
+                    const file = fileInput.files[0];
+                    const fileContent = await file.text();
+                    
+                    let backupData;
+                    try {
+                        backupData = JSON.parse(fileContent);
+                    } catch (e) {
+                        this.showNotification('Ошибка: файл не является корректным JSON', 'danger');
+                        return;
+                    }
+                    
+                    if (!backupData.version || !backupData.data || !Array.isArray(backupData.data)) {
+                        this.showNotification('Ошибка: неверный формат файла резервной копии', 'danger');
+                        return;
+                    }
+                    
+                    const restoreBtn = document.getElementById('restoreFromBackupBtn');
+                    const originalText = restoreBtn.innerHTML;
+                    restoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Восстановление...';
+                    restoreBtn.disabled = true;
+                    
+                    const response = await fetch(`${this.apiBaseUrl}${AppConfig.API_ENDPOINTS.DATA}/restore`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(backupData.data)
+                    });
+                    
+                    restoreBtn.innerHTML = originalText;
+                    restoreBtn.disabled = false;
+                    
+                    if (!response.ok) {
+                        const error = await response.json().catch(() => ({ error: 'Ошибка сервера' }));
+                        throw new Error(error.error || 'Ошибка восстановления');
+                    }
+                    
+                    await this.loadFromServer();
+                    
+                    this.updateStats();
+                    this.updateDetailedTable();
+                    this.updateChart();
+                    this.updateHistoryTable();
+                    this.updateReportDates();
+                    this.updateStatisticsSelects();
+                    this.updateDatabaseInfo();
+                    
+                    fileInput.value = '';
+                    const fileNameElement = document.getElementById('selectedFileName');
+                    if (fileNameElement) {
+                        fileNameElement.textContent = '';
+                    }
+                    
+                    this.showNotification('Данные успешно восстановлены из резервной копии!', 'success');
+                    
+                } catch (error) {
+                    console.error('Ошибка восстановления данных:', error);
+                    this.showNotification(`Ошибка восстановления: ${error.message}`, 'danger');
+                    
+                    const restoreBtn = document.getElementById('restoreFromBackupBtn');
+                    if (restoreBtn) {
+                        restoreBtn.innerHTML = '<i class="fas fa-undo-alt"></i> Восстановить данные';
+                        restoreBtn.disabled = false;
+                    }
                 }
             }
             
@@ -3830,7 +3862,6 @@
                         `;
                     });
                     
-                    // Добавляем ПС РЭС отдельно
                     const psResData = weekData.data.find(item => item.isPsRes);
                     if (psResData) {
                         htmlContent += `
@@ -4029,7 +4060,6 @@
                     
                     if (selectedDate) {
                         weekData = this.weeklyData.find(w => w.date === selectedDate);
-                        // Находим предыдущую неделю
                         const weekIndex = this.weeklyData.findIndex(w => w.date === selectedDate);
                         previousWeekData = this.weeklyData[weekIndex + 1];
                     } else {
@@ -4081,11 +4111,9 @@
                                 <h2>Сводка изменений (без учета ПС РЭС)</h2>
                     `;
                     
-                    // Расчет общих изменений
                     const currentFiltered = weekData.data.filter(item => !item.isPsRes);
                     const previousFiltered = previousWeekData.data.filter(item => !item.isPsRes);
                     
-                    // Общие изменения
                     const currentTotal = currentFiltered.reduce((sum, item) => sum + item.total, 0);
                     const previousTotal = previousFiltered.reduce((sum, item) => sum + item.total, 0);
                     const totalChange = currentTotal - previousTotal;
@@ -4138,7 +4166,6 @@
                                 </tr>
                     `;
                     
-                    // Детализация по каждому ФЭС
                     AppConfig.RES_LIST.filter(res => res.id !== 'ps').forEach((res, index) => {
                         const currentRes = weekData.data.find(item => item.id === res.id);
                         const previousRes = previousWeekData.data.find(item => item.id === res.id);
@@ -4181,7 +4208,6 @@
                                 <ul>
                     `;
                     
-                    // Анализ изменений
                     const resChanges = [];
                     AppConfig.RES_LIST.filter(res => res.id !== 'ps').forEach(res => {
                         const currentRes = weekData.data.find(item => item.id === res.id);
@@ -4198,10 +4224,8 @@
                         }
                     });
                     
-                    // Сортировка по величине изменения
                     resChanges.sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
                     
-                    // Добавляем топ-3 изменений
                     resChanges.slice(0, 3).forEach(change => {
                         htmlContent += `
                             <li><strong>${change.name}:</strong> ${change.previousPercent.toFixed(2)}% → ${change.currentPercent.toFixed(2)}% 
@@ -4318,7 +4342,6 @@
                                 <h2>Сводка сравнения (без учета ПС РЭС)</h2>
                     `;
                     
-                    // Расчет общих показателей
                     const week1Filtered = week1Data.data.filter(item => !item.isPsRes);
                     const week2Filtered = week2Data.data.filter(item => !item.isPsRes);
                     
@@ -4364,7 +4387,6 @@
                                 </tr>
                     `;
                     
-                    // Детализация по каждому ФЭС
                     AppConfig.RES_LIST.filter(res => res.id !== 'ps').forEach((res, index) => {
                         const week1Res = week1Data.data.find(item => item.id === res.id);
                         const week2Res = week2Data.data.find(item => item.id === res.id);
@@ -4407,7 +4429,6 @@
                                 <h3>📊 Ключевые выводы:</h3>
                     `;
                     
-                    // Анализ результатов
                     const improvements = [];
                     const deteriorations = [];
                     
@@ -4435,7 +4456,6 @@
                         }
                     });
                     
-                    // Сортировка
                     improvements.sort((a, b) => b.change - a.change);
                     deteriorations.sort((a, b) => a.change - b.change);
                     
@@ -4533,7 +4553,6 @@
             app = new SurveyStatisticsApp();
         });
 
-        // Экспорт объекта app в глобальную область видимости
         window.app = app;
     </script>
 </body>
