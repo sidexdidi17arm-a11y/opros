@@ -2997,20 +2997,24 @@
             showWeekDetails(date) {
                 const weekData = this.weeklyData.find(w => w.date === date);
                 if (!weekData) return;
-                
-                this.updateDetailedTable(date);
-                
+
+                // Сначала переключаемся на вкладку "Статистика" (она по умолчанию перерисовывает данные),
+                // затем принудительно показываем детали именно выбранной недели.
                 const statsTab = document.querySelector('[data-tab="stats"]');
                 if (statsTab) {
                     this.showTab({ currentTarget: statsTab });
                 }
-                
-                const weekLabel = document.getElementById('currentWeekLabel');
-                if (weekLabel) {
-                    weekLabel.textContent = `(${this.formatDate(new Date(date))})`;
+
+                // ВАЖНО: вызывать ПОСЛЕ showTab(), иначе showTab() перезапишет таблицу данными текущей недели.
+                this.updateDetailedTable(date);
+
+                // Плавно прокручиваем к детальной таблице (если она есть)
+                const detailedSection = document.getElementById('detailedTable');
+                if (detailedSection && typeof detailedSection.scrollIntoView === 'function') {
+                    detailedSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             }
-            
+
             showComparisonDetails(date1, date2) {
                 this.generateComparisonReport(date1, date2);
             }
