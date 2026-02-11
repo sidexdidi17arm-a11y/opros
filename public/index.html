@@ -3612,7 +3612,28 @@
                         return;
                     }
                     
-                    if (!backupData.version || !backupData.data || !Array.isArray(backupData.data)) {
+                    // Приводим резервную копию к поддерживаемому формату
+                    // Поддерживаем:
+                    // 1) { version, data: [...] } — стандартный формат этого приложения
+                    // 2) [...] — просто массив недель
+                    // 3) { weeks: [...] } или { weeklyData: [...] } — альтернативные экспорты
+                    let weeksArray = null;
+                    if (Array.isArray(backupData)) {
+                        weeksArray = backupData;
+                        backupData = { version: 'array-only', data: weeksArray };
+                    } else if (backupData && Array.isArray(backupData.data)) {
+                        weeksArray = backupData.data;
+                    } else if (backupData && Array.isArray(backupData.weeks)) {
+                        weeksArray = backupData.weeks;
+                        backupData = { version: backupData.version || 'weeks', data: weeksArray };
+                    } else if (backupData && Array.isArray(backupData.weeklyData)) {
+                        weeksArray = backupData.weeklyData;
+                        backupData = { version: backupData.version || 'weeklyData', data: weeksArray };
+                    }
+
+                    // Базовая проверка структуры недель
+                    const isValidWeek = (w) => w && typeof w === 'object' && typeof w.date === 'string' && Array.isArray(w.data);
+                    if (!weeksArray || !Array.isArray(weeksArray) || !weeksArray.every(isValidWeek)) {
                         this.showNotification('Ошибка: неверный формат файла резервной копии', 'danger');
                         return;
                     }
