@@ -2969,11 +2969,19 @@
                 // НОВОЕ: сколько СПОДЭС ПУ добавилось/убавилось за неделю (сумма по ФЭС)
                 let spoAdded = 0;
                 let spoRemoved = 0;
-                currentWeek.data.filter(item => !item.isPsRes).forEach(curr => {
-                    const prev = previousWeek.data.find(p => p.id === curr.id);
-                    const delta = (curr.totalSpo || 0) - (prev?.totalSpo || 0);
+
+                // Считаем по объединению ФЭС текущей и предыдущей недели,
+                // иначе "убавилось" будет занижено, если какой-то ФЭС исчез/не попал в текущую выборку.
+                const currSpoMap = new Map(currentWeek.data.filter(item => !item.isPsRes).map(x => [x.id, (x.totalSpo || 0)]));
+                const prevSpoMap = new Map(previousWeek.data.filter(item => !item.isPsRes).map(x => [x.id, (x.totalSpo || 0)]));
+                const allIds = new Set([...currSpoMap.keys(), ...prevSpoMap.keys()]);
+
+                allIds.forEach(id => {
+                    const currVal = currSpoMap.get(id) ?? 0;
+                    const prevVal = prevSpoMap.get(id) ?? 0;
+                    const delta = currVal - prevVal;
                     if (delta > 0) spoAdded += delta;
-                    else if (delta < 0) spoRemoved += Math.abs(delta);
+                    else if (delta < 0) spoRemoved += -delta;
                 });
 
                 card.innerHTML = `
@@ -4249,14 +4257,22 @@
                     const spoSurveyChange = currentSpoSurvey - previousSpoSurvey;
                     
                     // НОВОЕ: сколько СПОДЭС ПУ добавилось/убавилось за неделю (сумма по ФЭС)
-                    let spoAdded = 0;
-                    let spoRemoved = 0;
-                    currentFiltered.forEach(curr => {
-                        const prev = previousFiltered.find(p => p.id === curr.id);
-                        const delta = (curr.totalSpo || 0) - (prev?.totalSpo || 0);
-                        if (delta > 0) spoAdded += delta;
-                        else if (delta < 0) spoRemoved += Math.abs(delta);
-                    });
+                let spoAdded = 0;
+                let spoRemoved = 0;
+
+                // Считаем по объединению ФЭС текущей и предыдущей недели,
+                // иначе "убавилось" будет занижено, если какой-то ФЭС исчез/не попал в текущую выборку.
+                const currSpoMap = new Map(currentWeek.data.filter(item => !item.isPsRes).map(x => [x.id, (x.totalSpo || 0)]));
+                const prevSpoMap = new Map(previousWeek.data.filter(item => !item.isPsRes).map(x => [x.id, (x.totalSpo || 0)]));
+                const allIds = new Set([...currSpoMap.keys(), ...prevSpoMap.keys()]);
+
+                allIds.forEach(id => {
+                    const currVal = currSpoMap.get(id) ?? 0;
+                    const prevVal = prevSpoMap.get(id) ?? 0;
+                    const delta = currVal - prevVal;
+                    if (delta > 0) spoAdded += delta;
+                    else if (delta < 0) spoRemoved += -delta;
+                });
 
                     htmlContent += `
                                 <p>Всего ПУ: <strong>${previousTotal.toLocaleString()}</strong> → <strong>${currentTotal.toLocaleString()}</strong> 
