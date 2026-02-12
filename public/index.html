@@ -2966,23 +2966,12 @@
                 const previousSpoSurvey = previousWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.surveySpo, 0);
                 const spoSurveyChange = currentSpoSurvey - previousSpoSurvey;
                 
-                // НОВОЕ: сколько СПОДЭС ПУ добавилось/убавилось за неделю (сумма по ФЭС)
-                let spoAdded = 0;
-                let spoRemoved = 0;
+                // НОВОЕ (исправлено): добавилось/убавилось считаем как разницу между прошлой и текущей неделями
+                const spoAdded = Math.max(spoTotalChange, 0);
+                const spoRemoved = Math.max(-spoTotalChange, 0);
 
-                // Считаем по объединению ФЭС текущей и предыдущей недели,
-                // иначе "убавилось" будет занижено, если какой-то ФЭС исчез/не попал в текущую выборку.
-                const currSpoMap = new Map(currentWeek.data.filter(item => !item.isPsRes).map(x => [x.id, (x.totalSpo || 0)]));
-                const prevSpoMap = new Map(previousWeek.data.filter(item => !item.isPsRes).map(x => [x.id, (x.totalSpo || 0)]));
-                const allIds = new Set([...currSpoMap.keys(), ...prevSpoMap.keys()]);
-
-                allIds.forEach(id => {
-                    const currVal = currSpoMap.get(id) ?? 0;
-                    const prevVal = prevSpoMap.get(id) ?? 0;
-                    const delta = currVal - prevVal;
-                    if (delta > 0) spoAdded += delta;
-                    else if (delta < 0) spoRemoved += -delta;
-                });
+                const spoSurveyAdded = Math.max(spoSurveyChange, 0);
+                const spoSurveyRemoved = Math.max(-spoSurveyChange, 0);
 
                 card.innerHTML = `
                     <div class="stat-header">
@@ -3033,6 +3022,18 @@
                                     <span class="stat-value-label">СПОДЭС в опросе:</span>
                                     <span class="stat-value" style="color: ${spoSurveyChange > 0 ? 'var(--success)' : spoSurveyChange < 0 ? 'var(--danger)' : 'var(--gray)'};">
                                         ${spoSurveyChange > 0 ? '+' : ''}${spoSurveyChange.toLocaleString()}
+                                    </span>
+                                </div>
+                                <div class="stat-value-row">
+                                    <span class="stat-value-label">СПОДЭС в опросе + за неделю:</span>
+                                    <span class="stat-value" style="color: var(--success);">
+                                        +${spoSurveyAdded.toLocaleString()}
+                                    </span>
+                                </div>
+                                <div class="stat-value-row">
+                                    <span class="stat-value-label">СПОДЭС в опросе - за неделю:</span>
+                                    <span class="stat-value" style="color: var(--danger);">
+                                        -${spoSurveyRemoved.toLocaleString()}
                                     </span>
                                 </div>
                             </div>
@@ -4256,25 +4257,14 @@
                     const previousSpoSurvey = previousFiltered.reduce((sum, item) => sum + item.surveySpo, 0);
                     const spoSurveyChange = currentSpoSurvey - previousSpoSurvey;
                     
-                    // НОВОЕ: сколько СПОДЭС ПУ добавилось/убавилось за неделю (сумма по ФЭС)
-                let spoAdded = 0;
-                let spoRemoved = 0;
+                    // НОВОЕ (исправлено): добавилось/убавилось считаем как разницу между прошлой и текущей неделями
+                const spoAdded = Math.max(spoTotalChange, 0);
+                const spoRemoved = Math.max(-spoTotalChange, 0);
 
-                // Считаем по объединению ФЭС текущей и предыдущей недели,
-                // иначе "убавилось" будет занижено, если какой-то ФЭС исчез/не попал в текущую выборку.
-                const currSpoMap = new Map(currentWeek.data.filter(item => !item.isPsRes).map(x => [x.id, (x.totalSpo || 0)]));
-                const prevSpoMap = new Map(previousWeek.data.filter(item => !item.isPsRes).map(x => [x.id, (x.totalSpo || 0)]));
-                const allIds = new Set([...currSpoMap.keys(), ...prevSpoMap.keys()]);
+                const spoSurveyAdded = Math.max(spoSurveyChange, 0);
+                const spoSurveyRemoved = Math.max(-spoSurveyChange, 0);
 
-                allIds.forEach(id => {
-                    const currVal = currSpoMap.get(id) ?? 0;
-                    const prevVal = prevSpoMap.get(id) ?? 0;
-                    const delta = currVal - prevVal;
-                    if (delta > 0) spoAdded += delta;
-                    else if (delta < 0) spoRemoved += -delta;
-                });
-
-                    htmlContent += `
+                htmlContent += `
                                 <p>Всего ПУ: <strong>${previousTotal.toLocaleString()}</strong> → <strong>${currentTotal.toLocaleString()}</strong> 
                                 <span class="${totalChange > 0 ? 'increase' : totalChange < 0 ? 'decrease' : 'no-change'}">
                                     (${totalChange > 0 ? '+' : ''}${totalChange})
@@ -4293,6 +4283,8 @@
                                 <span class="${spoSurveyChange > 0 ? 'increase' : spoSurveyChange < 0 ? 'decrease' : 'no-change'}">
                                     (${spoSurveyChange > 0 ? '+' : ''}${spoSurveyChange})
                                 </span></p>
+                                <p>СПОДЭС в опросе добавилось за неделю: <strong class="increase">+${spoSurveyAdded.toLocaleString()}</strong></p>
+                                <p>СПОДЭС в опросе убавилось за неделю: <strong class="decrease">-${spoSurveyRemoved.toLocaleString()}</strong></p>
                             </div>
                             
                             <h2>Детализация изменений по ФЭС</h2>
