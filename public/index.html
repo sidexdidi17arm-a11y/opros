@@ -2970,7 +2970,7 @@
                     .reduce((sum, item) => sum + (typeof item.spoNotInSurvey === 'number' ? item.spoNotInSurvey : Math.max(0, (item.totalSpo || 0) - (item.surveySpo || 0))), 0);
                 const previousSpoNotInSurvey = previousWeek.data.filter(item => !item.isPsRes)
                     .reduce((sum, item) => sum + (typeof item.spoNotInSurvey === 'number' ? item.spoNotInSurvey : Math.max(0, (item.totalSpo || 0) - (item.surveySpo || 0))), 0);
-                const spoNotInSurveyChange = currentSpoNotInSurvey - previousSpoNotInSurvey;
+                const spoNotInSurveyChange = previousSpoNotInSurvey - currentSpoNotInSurvey;
 
                 card.innerHTML = `
                     <div class="stat-header">
