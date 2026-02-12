@@ -2965,21 +2965,15 @@
                 const currentSpoSurvey = currentWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.surveySpo, 0);
                 const previousSpoSurvey = previousWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.surveySpo, 0);
                 const spoSurveyChange = currentSpoSurvey - previousSpoSurvey;
-                
-                // НОВАЯ ЛОГИКА: разница СПОДЭС ПУ (текущая неделя - прошлая неделя)
-                // Плюс/минус за неделю считаем по итоговым суммам, без разложения по ФЭС.
-                const spoDelta = spoTotalChange;
-                const spoAdded = Math.max(0, spoDelta);
-                const spoRemoved = Math.max(0, -spoDelta);
+                // НОВОЕ: Δ СПОДЭС (текущая неделя − прошлая неделя)
+                // По требованию: считаем разницей недельных итогов, а не суммой изменений по ФЭС.
+                const currentSpoNotInSurvey = Math.max(0, currentSpoTotal - currentSpoSurvey);
+                const previousSpoNotInSurvey = Math.max(0, previousSpoTotal - previousSpoSurvey);
 
-                // Тоже самое для СПОДЭС не в опросе
-                const currentSpoNotInSurvey = currentWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + (item.spoNotInSurvey || 0), 0);
-                const previousSpoNotInSurvey = previousWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + (item.spoNotInSurvey || 0), 0);
-                const spoNotInSurveyChange = currentSpoNotInSurvey - previousSpoNotInSurvey;
-                const spoNotInSurveyAdded = Math.max(0, spoNotInSurveyChange);
-                const spoNotInSurveyRemoved = Math.max(0, -spoNotInSurveyChange);
+                const spoSurveyDelta = currentSpoSurvey - previousSpoSurvey;
+                const spoNotInSurveyDelta = currentSpoNotInSurvey - previousSpoNotInSurvey;
 
-                card.innerHTML = `
+card.innerHTML = `
                     <div class="stat-header">
                         <div class="stat-title">
                             <div class="stat-icon">
@@ -3011,38 +3005,7 @@
                                     <span class="stat-value" style="color: ${spoTotalChange > 0 ? 'var(--success)' : spoTotalChange < 0 ? 'var(--danger)' : 'var(--gray)'};">
                                         ${spoTotalChange > 0 ? '+' : ''}${spoTotalChange.toLocaleString()}
                                     </span>
-                                </div>
-                                <div class="stat-value-row">
-                                    <span class="stat-value-label">СПОДЭС + за неделю:</span>
-                                    <span class="stat-value" style="color: var(--success);">
-                                        +${spoAdded.toLocaleString()}
-                                    </span>
-                                </div>
-                                <div class="stat-value-row">
-                                    <span class="stat-value-label">СПОДЭС - за неделю:</span>
-                                    <span class="stat-value" style="color: var(--danger);">
-                                        -${spoRemoved.toLocaleString()}
-                                    </span>
-                                </div>
-                                <div class="stat-value-row">
-                                    <span class="stat-value-label">СПОДЭС не в опросе + за неделю:</span>
-                                    <span class="stat-value" style="color: var(--success);">
-                                        +${spoNotInSurveyAdded.toLocaleString()}
-                                    </span>
-                                </div>
-                                <div class="stat-value-row">
-                                    <span class="stat-value-label">СПОДЭС не в опросе - за неделю:</span>
-                                    <span class="stat-value" style="color: var(--danger);">
-                                        -${spoNotInSurveyRemoved.toLocaleString()}
-                                    </span>
-                                </div>
-                                <div class="stat-value-row">
-                                    <span class="stat-value-label">СПОДЭС в опросе:</span>
-                                    <span class="stat-value" style="color: ${spoSurveyChange > 0 ? 'var(--success)' : spoSurveyChange < 0 ? 'var(--danger)' : 'var(--gray)'};">
-                                        ${spoSurveyChange > 0 ? '+' : ''}${spoSurveyChange.toLocaleString()}
-                                    </span>
-                                </div>
-                            </div>
+                                </div></div>
                             <div class="stat-details" style="margin-top: 15px;">
                                 <div class="stat-detail-item">
                                     <div class="stat-detail-value" style="color: ${totalChange > 0 ? 'var(--success)' : totalChange < 0 ? 'var(--danger)' : 'var(--gray)'};">
@@ -4262,20 +4225,15 @@
                     const currentSpoSurvey = currentFiltered.reduce((sum, item) => sum + item.surveySpo, 0);
                     const previousSpoSurvey = previousFiltered.reduce((sum, item) => sum + item.surveySpo, 0);
                     const spoSurveyChange = currentSpoSurvey - previousSpoSurvey;
-                    
-                    // НОВАЯ ЛОГИКА: разница СПОДЭС ПУ (текущая неделя - прошлая неделя)
-                const spoDelta = spoTotalChange;
-                const spoAdded = Math.max(0, spoDelta);
-                const spoRemoved = Math.max(0, -spoDelta);
+                // НОВОЕ: Δ СПОДЭС (текущая неделя − прошлая неделя)
+                // По требованию: считаем разницей недельных итогов, а не суммой изменений по ФЭС.
+                const currentSpoNotInSurvey = Math.max(0, currentSpoTotal - currentSpoSurvey);
+                const previousSpoNotInSurvey = Math.max(0, previousSpoTotal - previousSpoSurvey);
 
-                // Тоже самое для СПОДЭС не в опросе
-                const currentSpoNotInSurvey = currentWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + (item.spoNotInSurvey || 0), 0);
-                const previousSpoNotInSurvey = previousWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + (item.spoNotInSurvey || 0), 0);
-                const spoNotInSurveyChange = currentSpoNotInSurvey - previousSpoNotInSurvey;
-                const spoNotInSurveyAdded = Math.max(0, spoNotInSurveyChange);
-                const spoNotInSurveyRemoved = Math.max(0, -spoNotInSurveyChange);
+                const spoSurveyDelta = currentSpoSurvey - previousSpoSurvey;
+                const spoNotInSurveyDelta = currentSpoNotInSurvey - previousSpoNotInSurvey;
 
-                    htmlContent += `
+htmlContent += `
                                 <p>Всего ПУ: <strong>${previousTotal.toLocaleString()}</strong> → <strong>${currentTotal.toLocaleString()}</strong> 
                                 <span class="${totalChange > 0 ? 'increase' : totalChange < 0 ? 'decrease' : 'no-change'}">
                                     (${totalChange > 0 ? '+' : ''}${totalChange})
@@ -4288,14 +4246,11 @@
                                 <span class="${spoTotalChange > 0 ? 'increase' : spoTotalChange < 0 ? 'decrease' : 'no-change'}">
                                     (${spoTotalChange > 0 ? '+' : ''}${spoTotalChange})
                                 </span></p>
-                                <p>СПОДЭС ПУ добавилось за неделю: <strong class="increase">+${spoAdded.toLocaleString()}</strong></p>
-                                <p>СПОДЭС ПУ убавилось за неделю: <strong class="decrease">-${spoRemoved.toLocaleString()}</strong></p><p>СПОДЭС не в опросе: <strong>${previousSpoNotInSurvey.toLocaleString()}</strong> → <strong>${currentSpoNotInSurvey.toLocaleString()}</strong> 
-                                <span class="${spoNotInSurveyChange > 0 ? 'increase' : spoNotInSurveyChange < 0 ? 'decrease' : 'no-change'}">
-                                    (${spoNotInSurveyChange > 0 ? '+' : ''}${spoNotInSurveyChange})
+                                <p>СПОДЭС не в опросе: <strong>${previousSpoNotInSurvey.toLocaleString()}</strong> → <strong>${currentSpoNotInSurvey.toLocaleString()}</strong> 
+                                <span class="${spoNotInSurveyDelta > 0 ? 'increase' : spoNotInSurveyDelta < 0 ? 'decrease' : 'no-change'}">
+                                    (${spoNotInSurveyDelta > 0 ? '+' : ''}${spoNotInSurveyDelta})
                                 </span></p>
-                                <p>СПОДЭС не в опросе добавилось за неделю: <strong class="increase">+${spoNotInSurveyAdded.toLocaleString()}</strong></p>
-                                <p>СПОДЭС не в опросе убавилось за неделю: <strong class="decrease">-${spoNotInSurveyRemoved.toLocaleString()}</strong></p>
-                                <p>СПОДЭС в опросе: <strong>${previousSpoSurvey.toLocaleString()}</strong> → <strong>${currentSpoSurvey.toLocaleString()}</strong> 
+<p>СПОДЭС в опросе: <strong>${previousSpoSurvey.toLocaleString()}</strong> → <strong>${currentSpoSurvey.toLocaleString()}</strong> 
                                 <span class="${spoSurveyChange > 0 ? 'increase' : spoSurveyChange < 0 ? 'decrease' : 'no-change'}">
                                     (${spoSurveyChange > 0 ? '+' : ''}${spoSurveyChange})
                                 </span></p>
