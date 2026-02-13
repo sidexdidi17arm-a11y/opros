@@ -1861,6 +1861,7 @@
                 this.updateReportDates();
                 this.updateStatisticsSelects();
                 this.updateTabsForUserRole();
+                this.setupWeeklyDiffAutoClose();
                 this.startHealthCheck();
             }
             
@@ -3058,44 +3059,38 @@
                         </div>
                     </div>
                     <div class="stat-content">
-                        <div class="subtable-title">Разница за неделю</div>
-                        <table class="excel-mini-table" aria-label="Разница за неделю (итого)">
-                            <thead>
-                                <tr>
-                                    <th style="width: 54%;">Показатель</th>
-                                    <th class="num" style="width: 46%;">Разница</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>ВСЕГО ПУ</td>
-                                    <td class="num" style="color:${colorize(dTotal)};">${fmtNum(dTotal)}</td>
-                                </tr>
-                                <tr>
-                                    <td>ПУ В Опросе</td>
-                                    <td class="num" style="color:${colorize(dSurvey)};">${fmtNum(dSurvey)}</td>
-                                </tr>
-                                <tr>
-                                    <td>% Опроса (за неделю)</td>
-                                    <td class="num" style="color:${colorize(dPercent)};">${fmtPP(dPercent)}</td>
-                                </tr>
-                                <tr>
-                                    <td>СПОДЭС - ПУ</td>
-                                    <td class="num" style="color:${colorize(dSpoTotal)};">${fmtNum(dSpoTotal)}</td>
-                                </tr>
-                                <tr>
-                                    <td>СПОДЭС - ПУ В Опросе</td>
-                                    <td class="num" style="color:${colorize(dSpoSurvey)};">${fmtNum(dSpoSurvey)}</td>
-                                </tr>
-                                <tr>
-                                    <td>% Опроса (СПОДЭС)</td>
-                                    <td class="num" style="color:${colorize(dSpoPercent)};">${fmtPP(dSpoPercent)}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div class="stat-values">
+                            <div class="stat-value-row">
+                                <span class="stat-label">ВСЕГО ПУ</span>
+                                <span class="stat-value" style="font-size: 16px; color:${colorize(dTotal)};">${fmtNum(dTotal)}</span>
+                            </div>
+                            <div class="stat-value-row">
+                                <span class="stat-label">ПУ в опросе</span>
+                                <span class="stat-value" style="font-size: 16px; color:${colorize(dSurvey)};">${fmtNum(dSurvey)}</span>
+                            </div>
+                            <div class="stat-value-row">
+                                <span class="stat-label">% опроса</span>
+                                <span class="stat-value" style="font-size: 16px; color:${colorize(dPercent)};">${fmtPP(dPercent)}</span>
+                            </div>
+
+                            <div class="divider" style="margin: 10px 0;"></div>
+
+                            <div class="stat-value-row">
+                                <span class="stat-label">СПОДЭС всего</span>
+                                <span class="stat-value" style="font-size: 16px; color:${colorize(dSpoTotal)};">${fmtNum(dSpoTotal)}</span>
+                            </div>
+                            <div class="stat-value-row">
+                                <span class="stat-label">СПОДЭС в опросе</span>
+                                <span class="stat-value" style="font-size: 16px; color:${colorize(dSpoSurvey)};">${fmtNum(dSpoSurvey)}</span>
+                            </div>
+                            <div class="stat-value-row">
+                                <span class="stat-label">% СПОДЭС</span>
+                                <span class="stat-value" style="font-size: 16px; color:${colorize(dSpoPercent)};">${fmtPP(dSpoPercent)}</span>
+                            </div>
+                        </div>
 
                         <div class="excel-actions">
-                            <button class="excel-more-btn" type="button" id="weeklyDiffMoreBtn">
+                            <button class="excel-more-btn" id="weeklyDiffMoreBtn" type="button">
                                 <i class="fas fa-table"></i> Подробнее
                             </button>
                         </div>
@@ -3299,7 +3294,32 @@
             }
 
 
-            
+            hideWeeklyDiffDetails() {
+                const mount = document.getElementById('weeklyDiffDetailsMount');
+                if (mount) mount.innerHTML = '';
+            }
+
+            setupWeeklyDiffAutoClose() {
+                if (this._weeklyDiffAutoCloseSetup) return;
+                this._weeklyDiffAutoCloseSetup = true;
+
+                document.addEventListener('click', (e) => {
+                    const detailsCard = document.getElementById('weeklyDiffDetailsCard');
+                    if (!detailsCard) return;
+
+                    const insideDetails = e.target.closest('#weeklyDiffDetailsCard');
+                    const isMoreBtn = e.target.closest('#weeklyDiffMoreBtn');
+                    if (insideDetails || isMoreBtn) return;
+
+                    // Закрываем таблицу при нажатии на любые другие интерактивные элементы (кнопки/табы/поля)
+                    const clickedInteractive = e.target.closest('button, a, .tab, .tab-btn, input, select, textarea');
+                    if (clickedInteractive) {
+                        this.hideWeeklyDiffDetails();
+                    }
+                }, true);
+            }
+
+
             findBestWeek() {
                 if (this.weeklyData.length === 0) return null;
                 
@@ -3561,7 +3581,8 @@
                             maintainAspectRatio: false,
                             scales: {
                                 y: {
-                                    beginAtZero: true,
+                                    beginAtZero: false,
+                                    min: 80,
                                     max: 100,
                                     ticks: {
                                         callback: function(value) {
