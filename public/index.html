@@ -2686,7 +2686,7 @@
                         }
                     }
                     
-                    if (this.weeklyData.length >= 2) {
+                    if (this.weeklyData.length >= 1) {
                         const changesCard = this.createChangesCard();
                         container.appendChild(changesCard);
                     }
@@ -2920,15 +2920,18 @@
                 const card = document.createElement('div');
                 card.className = 'stat-card';
 
-                // Требуется минимум 3 недельных среза: прошедшая неделя и неделя до неё
-                if (this.weeklyData.length < 3) {
+                // Логика как в Excel "Разница за неделю":
+                // считаем (базовая неделя) - (предыдущая неделя).
+                // По умолчанию базовая = "прошедшая" неделя (weeklyData[1]), предыдущая = неделя до неё (weeklyData[2]).
+                // Если данных всего 2 недели, считаем по последней доступной паре: (weeklyData[0]) - (weeklyData[1]).
+                if (this.weeklyData.length < 2) {
                     card.innerHTML = `
                         <div class="stat-header">
                             <div class="stat-title">
                                 <div class="stat-icon"><i class="fas fa-exchange-alt"></i></div>
                                 <div>
                                     <div class="stat-name">Изменения ПУ за прошедшую неделю</div>
-                                    <div class="stat-subtitle">Недостаточно данных (нужно минимум 2 прошлые недели)</div>
+                                    <div class="stat-subtitle">Недостаточно данных (нужно минимум 2 недели)</div>
                                 </div>
                             </div>
                         </div>
@@ -2936,9 +2939,10 @@
                     return card;
                 }
 
-                // Порядок данных: [0]=текущая, [1]=прошедшая, [2]=неделя до неё
-                const baseWeek = this.weeklyData[1];
-                const prevWeek = this.weeklyData[2];
+                const hasPastWeekPair = this.weeklyData.length >= 3;
+                const baseWeek = hasPastWeekPair ? this.weeklyData[1] : this.weeklyData[0];
+                const prevWeek = hasPastWeekPair ? this.weeklyData[2] : this.weeklyData[1];
+
 
                 const isPs = (item) => !!item.isPsRes;
 
