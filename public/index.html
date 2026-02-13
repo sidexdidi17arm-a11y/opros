@@ -2920,174 +2920,196 @@
                 const card = document.createElement('div');
                 card.className = 'stat-card';
 
-                if (this.weeklyData.length < 2) {
+                // Требуется минимум 3 недельных среза: прошедшая неделя и неделя до неё
+                if (this.weeklyData.length < 3) {
                     card.innerHTML = `
+                        <div class="stat-header">
+                            <div class="stat-title">
+                                <div class="stat-icon"><i class="fas fa-exchange-alt"></i></div>
+                                <div>
+                                    <div class="stat-name">Изменения ПУ за прошедшую неделю</div>
+                                    <div class="stat-subtitle">Недостаточно данных (нужно минимум 2 прошлые недели)</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    return card;
+                }
+
+                // Порядок данных: [0]=текущая, [1]=прошедшая, [2]=неделя до неё
+                const baseWeek = this.weeklyData[1];
+                const prevWeek = this.weeklyData[2];
+
+                const isPs = (item) => !!item.isPsRes;
+
+                const sum = (arr, key) => arr.reduce((acc, it) => acc + (Number(it[key]) || 0), 0);
+
+                const baseData = (baseWeek?.data || []).filter(it => !isPs(it));
+                const prevData = (prevWeek?.data || []).filter(it => !isPs(it));
+
+                // Основные ПУ
+                const baseTotal = sum(baseData, 'total');
+                const prevTotal = sum(prevData, 'total');
+
+                const baseSurvey = sum(baseData, 'survey');
+                const prevSurvey = sum(prevData, 'survey');
+
+                const baseCounters = Math.max(0, baseTotal - baseSurvey);
+                const prevCounters = Math.max(0, prevTotal - prevSurvey);
+
+                const basePct = baseTotal ? (baseSurvey / baseTotal) * 100 : 0;
+                const prevPct = prevTotal ? (prevSurvey / prevTotal) * 100 : 0;
+
+                const dTotal = baseTotal - prevTotal;
+                const dSurvey = baseSurvey - prevSurvey;
+                const dCounters = baseCounters - prevCounters;
+                const dPct = basePct - prevPct;
+
+                // СПОДЭС
+                const baseSpoTotal = sum(baseData, 'spo_total');
+                const prevSpoTotal = sum(prevData, 'spo_total');
+
+                const baseSpoSurvey = sum(baseData, 'spo_survey');
+                const prevSpoSurvey = sum(prevData, 'spo_survey');
+
+                const baseSpoPct = baseSpoTotal ? (baseSpoSurvey / baseSpoTotal) * 100 : 0;
+                const prevSpoPct = prevSpoTotal ? (prevSpoSurvey / prevSpoTotal) * 100 : 0;
+
+                const dSpoTotal = baseSpoTotal - prevSpoTotal;
+                const dSpoSurvey = baseSpoSurvey - prevSpoSurvey;
+                const dSpoPct = baseSpoPct - prevSpoPct;
+
+                const fmtInt = (v) => {
+                    const n = Number(v) || 0;
+                    return n.toLocaleString('ru-RU');
+                };
+                const fmtDelta = (v) => {
+                    const n = Number(v) || 0;
+                    if (n > 0) return `+${fmtInt(n)}`;
+                    if (n < 0) return `-${fmtInt(Math.abs(n))}`;
+                    return '0';
+                };
+                const fmtPct = (v) => (Number(v) || 0).toFixed(2);
+                const fmtPctDelta = (v) => {
+                    const n = Number(v) || 0;
+                    if (n > 0) return `+${fmtPct(n)}`;
+                    if (n < 0) return `-${fmtPct(Math.abs(n))}`;
+                    return '0.00';
+                };
+
+                const detailsId = `weeklyDetails_${baseWeek.week.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+                // Минимум (как "Разница за неделю")
+                const miniRows = [
+                    { label: 'Всего ПУ', val: dTotal, isPct: false },
+                    { label: 'ПУ в опросе', val: dSurvey, isPct: false },
+                    { label: '% опроса', val: dPct, isPct: true, suffix: ' п.п.' },
+                    { label: 'Счётчики (не в опросе)', val: dCounters, isPct: false },
+                    { label: 'Всего ПУ СПОДЭС', val: dSpoTotal, isPct: false },
+                    { label: 'ПУ в опросе СПОДЭС', val: dSpoSurvey, isPct: false },
+                    { label: '% опроса СПОДЭС', val: dSpoPct, isPct: true, suffix: ' п.п.' },
+                ];
+
+                const rowHtml = (r) => {
+                    const deltaTxt = r.isPct ? `${fmtPctDelta(r.val)}${r.suffix || ''}` : fmtDelta(r.val);
+                    const color =
+                        (Number(r.val) || 0) > 0 ? 'var(--success)' :
+                        (Number(r.val) || 0) < 0 ? 'var(--danger)' : 'var(--gray)';
+                    return `
+                        <tr>
+                            <td style="padding: 6px 10px; border-bottom: 1px solid var(--border); font-size: 12px;">${r.label}</td>
+                            <td style="padding: 6px 10px; border-bottom: 1px solid var(--border); text-align:right; font-size: 12px; color:${color}; white-space:nowrap;">
+                                ${deltaTxt}
+                            </td>
+                        </tr>
+                    `;
+                };
+
+                // Полные данные (как Excel: было/стало/разница)
+                const fullRows = [
+                    { label: 'Всего ПУ', prev: prevTotal, base: baseTotal, d: dTotal, pct: false },
+                    { label: 'ПУ в опросе', prev: prevSurvey, base: baseSurvey, d: dSurvey, pct: false },
+                    { label: 'Счётчики (не в опросе)', prev: prevCounters, base: baseCounters, d: dCounters, pct: false },
+                    { label: '% опроса', prev: prevPct, base: basePct, d: dPct, pct: true, suffix: ' п.п.' },
+                    { label: 'Всего ПУ СПОДЭС', prev: prevSpoTotal, base: baseSpoTotal, d: dSpoTotal, pct: false },
+                    { label: 'ПУ в опросе СПОДЭС', prev: prevSpoSurvey, base: baseSpoSurvey, d: dSpoSurvey, pct: false },
+                    { label: '% опроса СПОДЭС', prev: prevSpoPct, base: baseSpoPct, d: dSpoPct, pct: true, suffix: ' п.п.' },
+                ];
+
+                const fullRowHtml = (r) => {
+                    const dTxt = r.pct ? `${fmtPctDelta(r.d)}${r.suffix || ''}` : fmtDelta(r.d);
+                    const color =
+                        (Number(r.d) || 0) > 0 ? 'var(--success)' :
+                        (Number(r.d) || 0) < 0 ? 'var(--danger)' : 'var(--gray)';
+                    const prevTxt = r.pct ? `${fmtPct(r.prev)}%` : fmtInt(r.prev);
+                    const baseTxt = r.pct ? `${fmtPct(r.base)}%` : fmtInt(r.base);
+                    return `
+                        <tr>
+                            <td style="padding: 6px 10px; border-bottom: 1px solid var(--border); font-size: 12px;">${r.label}</td>
+                            <td style="padding: 6px 10px; border-bottom: 1px solid var(--border); text-align:right; font-size: 12px; white-space:nowrap;">${prevTxt}</td>
+                            <td style="padding: 6px 10px; border-bottom: 1px solid var(--border); text-align:right; font-size: 12px; white-space:nowrap;">${baseTxt}</td>
+                            <td style="padding: 6px 10px; border-bottom: 1px solid var(--border); text-align:right; font-size: 12px; color:${color}; white-space:nowrap;">${dTxt}</td>
+                        </tr>
+                    `;
+                };
+
+                card.innerHTML = `
                     <div class="stat-header">
                         <div class="stat-title">
                             <div class="stat-icon">
                                 <i class="fas fa-exchange-alt"></i>
                             </div>
                             <div>
-                                <div>Изменения ПУ за прошедшую неделю</div>
-                                <div class="stat-date">${baseDateStr} − ${prevDateStr}</div>
+                                <div class="stat-name">Изменения ПУ за прошедшую неделю</div>
+                                <div class="stat-subtitle">Разница за неделю: ${baseWeek.week} − ${prevWeek.week}</div>
                             </div>
                         </div>
+                        <button class="btn btn-outline btn-sm" type="button" onclick="
+                            (function(){
+                                const el = document.getElementById('${detailsId}');
+                                if(!el) return;
+                                const isHidden = el.style.display === 'none' || !el.style.display;
+                                el.style.display = isHidden ? 'block' : 'none';
+                            })();
+                        ">
+                            <i class="fas fa-info-circle"></i> Подробнее
+                        </button>
                     </div>
-                    <div class="stat-content">
-                        <!-- Минимальная сводка как в Excel: только "Разница за неделю" -->
-                        <div style="flex: 1;">
-                            <div style="
-                                font-size: 11px;
-                                color: var(--gray);
-                                margin-bottom: 8px;
-                            ">Разница за неделю</div>
 
-                            <div style="
-                                border: 1px solid var(--border);
-                                border-radius: 10px;
-                                overflow: hidden;
-                                background: #fff;
-                            ">
-                                <table style="width: 100%; border-collapse: collapse; font-size: 12px; line-height: 1.25;">
+                    <div class="stat-content" style="padding-top: 6px;">
+                        <div style="border:1px solid var(--border); border-radius: 12px; overflow:hidden;">
+                            <table style="width:100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:left; padding: 7px 10px; font-size: 12px; background: rgba(148,163,184,0.08); border-bottom: 1px solid var(--border);">Разница за неделю</th>
+                                        <th style="text-align:right; padding: 7px 10px; font-size: 12px; background: rgba(148,163,184,0.08); border-bottom: 1px solid var(--border); white-space:nowrap;">Δ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${miniRows.map(rowHtml).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="${detailsId}" style="display:none; margin-top: 12px;">
+                            <div style="border:1px solid var(--border); border-radius: 12px; overflow:hidden;">
+                                <table style="width:100%; border-collapse: collapse;">
                                     <thead>
-                                        <tr style="background: var(--light);">
-                                            <th style="text-align:left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-weight: 600;">Показатель</th>
-                                            <th style="text-align:right; padding: 8px 10px; border-bottom: 1px solid var(--border); font-weight: 600; white-space: nowrap;">Разница</th>
+                                        <tr>
+                                            <th style="text-align:left; padding: 7px 10px; font-size: 12px; background: rgba(148,163,184,0.08); border-bottom: 1px solid var(--border);">Подробные данные за неделю</th>
+                                            <th style="text-align:right; padding: 7px 10px; font-size: 12px; background: rgba(148,163,184,0.08); border-bottom: 1px solid var(--border); white-space:nowrap;">Было (${prevWeek.week})</th>
+                                            <th style="text-align:right; padding: 7px 10px; font-size: 12px; background: rgba(148,163,184,0.08); border-bottom: 1px solid var(--border); white-space:nowrap;">Стало (${baseWeek.week})</th>
+                                            <th style="text-align:right; padding: 7px 10px; font-size: 12px; background: rgba(148,163,184,0.08); border-bottom: 1px solid var(--border); white-space:nowrap;">Разница</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td style="padding: 7px 10px; border-bottom: 1px solid var(--border);">Всего ПУ</td>
-                                            <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right; white-space: nowrap; color: ${totalChange > 0 ? 'var(--success)' : totalChange < 0 ? 'var(--danger)' : 'var(--gray)'};">${fmtDelta(totalChange)}</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 7px 10px; border-bottom: 1px solid var(--border);">ПУ в опросе</td>
-                                            <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right; white-space: nowrap; color: ${surveyChange > 0 ? 'var(--success)' : surveyChange < 0 ? 'var(--danger)' : 'var(--gray)'};">${fmtDelta(surveyChange)}</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 7px 10px; border-bottom: 1px solid var(--border);">% опроса</td>
-                                            <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right; white-space: nowrap; color: ${surveyPercentChange > 0 ? 'var(--success)' : surveyPercentChange < 0 ? 'var(--danger)' : 'var(--gray)'};">
-                                                ${fmtPctDelta(surveyPercentChange)} п.п.
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 7px 10px; border-bottom: 1px solid var(--border);">Всего ПУ СПОДЭС</td>
-                                            <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right; white-space: nowrap; color: ${spoTotalChange > 0 ? 'var(--success)' : spoTotalChange < 0 ? 'var(--danger)' : 'var(--gray)'};">${fmtDelta(spoTotalChange)}</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 7px 10px; border-bottom: 1px solid var(--border);">ПУ в опросе СПОДЭС</td>
-                                            <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right; white-space: nowrap; color: ${spoSurveyChange > 0 ? 'var(--success)' : spoSurveyChange < 0 ? 'var(--danger)' : 'var(--gray)'};">${fmtDelta(spoSurveyChange)}</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 7px 10px;">% опроса СПОДЭС</td>
-                                            <td style="padding: 7px 10px; text-align:right; white-space: nowrap; color: ${spoSurveyPercentChange > 0 ? 'var(--success)' : spoSurveyPercentChange < 0 ? 'var(--danger)' : 'var(--gray)'};">
-                                                ${fmtPctDelta(spoSurveyPercentChange)} п.п.
-                                            </td>
-                                        </tr>
+                                        ${fullRows.map(fullRowHtml).join('')}
                                     </tbody>
                                 </table>
                             </div>
-
-                            <div style="margin-top: 10px; display:flex; justify-content:flex-end;">
-                                <button class="btn btn-outline btn-sm" id="toggleWeekDiffDetailsBtn" onclick="
-                                    const details = document.getElementById('weekDiffDetails');
-                                    const btn = document.getElementById('toggleWeekDiffDetailsBtn');
-                                    if (!details || !btn) return;
-                                    const isHidden = details.style.display === 'none' || details.style.display === '';
-                                    details.style.display = isHidden ? 'block' : 'none';
-                                    btn.innerHTML = isHidden ? '<i class=&quot;fas fa-chevron-up&quot;></i> Скрыть' : '<i class=&quot;fas fa-chevron-down&quot;></i> Подробнее';
-                                ">
-                                    <i class="fas fa-chevron-down"></i> Подробнее
-                                </button>
-                            </div>
-
-                            <!-- Подробные данные за неделю (как в Excel: было / стало / разница) -->
-                            <div id="weekDiffDetails" style="display:none; margin-top: 10px;">
-                                <div style="font-size: 11px; color: var(--gray); margin-bottom: 8px;">Подробные данные за неделю</div>
-
-                                <div style="
-                                    border: 1px solid var(--border);
-                                    border-radius: 10px;
-                                    overflow: hidden;
-                                    background: #fff;
-                                ">
-                                    <table style="width: 100%; border-collapse: collapse; font-size: 12px; line-height: 1.25;">
-                                        <thead>
-                                            <tr style="background: var(--light);">
-                                                <th style="text-align:left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-weight: 600;">Показатель</th>
-                                                <th style="text-align:right; padding: 8px 10px; border-bottom: 1px solid var(--border); font-weight: 600; white-space: nowrap;">${prevDateStr}</th>
-                                                <th style="text-align:right; padding: 8px 10px; border-bottom: 1px solid var(--border); font-weight: 600; white-space: nowrap;">${baseDateStr}</th>
-                                                <th style="text-align:right; padding: 8px 10px; border-bottom: 1px solid var(--border); font-weight: 600; white-space: nowrap;">Разница</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border);">Всего ПУ</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right;">${fmtInt(prevTotal)}</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right;">${fmtInt(baseTotal)}</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right; color: ${totalChange > 0 ? 'var(--success)' : totalChange < 0 ? 'var(--danger)' : 'var(--gray)'};">${fmtDelta(totalChange)}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border);">ПУ в опросе</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right;">${fmtInt(prevSurvey)}</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right;">${fmtInt(baseSurvey)}</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right; color: ${surveyChange > 0 ? 'var(--success)' : surveyChange < 0 ? 'var(--danger)' : 'var(--gray)'};">${fmtDelta(surveyChange)}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border);">ПУ не в опросе (счётчики)</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right;">${fmtInt(prevNotInSurvey)}</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right;">${fmtInt(baseNotInSurvey)}</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right; color: ${notInSurveyChange > 0 ? 'var(--danger)' : notInSurveyChange < 0 ? 'var(--success)' : 'var(--gray)'};">${fmtDelta(notInSurveyChange)}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border);">% опроса</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right;">${fmtPct(prevSurveyPercent)}%</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right;">${fmtPct(baseSurveyPercent)}%</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right; color: ${surveyPercentChange > 0 ? 'var(--success)' : surveyPercentChange < 0 ? 'var(--danger)' : 'var(--gray)'};">${fmtPctDelta(surveyPercentChange)} п.п.</td>
-                                            </tr>
-
-                                            <tr>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border);">Всего ПУ СПОДЭС</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right;">${fmtInt(prevSpoTotal)}</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right;">${fmtInt(baseSpoTotal)}</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right; color: ${spoTotalChange > 0 ? 'var(--success)' : spoTotalChange < 0 ? 'var(--danger)' : 'var(--gray)'};">${fmtDelta(spoTotalChange)}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border);">ПУ в опросе СПОДЭС</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right;">${fmtInt(prevSpoSurvey)}</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right;">${fmtInt(baseSpoSurvey)}</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right; color: ${spoSurveyChange > 0 ? 'var(--success)' : spoSurveyChange < 0 ? 'var(--danger)' : 'var(--gray)'};">${fmtDelta(spoSurveyChange)}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border);">ПУ не в опросе СПОДЭС</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right;">${fmtInt(prevSpoNotInSurvey)}</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right;">${fmtInt(baseSpoNotInSurvey)}</td>
-                                                <td style="padding: 7px 10px; border-bottom: 1px solid var(--border); text-align:right; color: ${spoNotInSurveyChange > 0 ? 'var(--danger)' : spoNotInSurveyChange < 0 ? 'var(--success)' : 'var(--gray)'};">${fmtDelta(spoNotInSurveyChange)}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 7px 10px;">% опроса СПОДЭС</td>
-                                                <td style="padding: 7px 10px; text-align:right;">${fmtPct(prevSpoSurveyPercent)}%</td>
-                                                <td style="padding: 7px 10px; text-align:right;">${fmtPct(baseSpoSurveyPercent)}%</td>
-                                                <td style="padding: 7px 10px; text-align:right; color: ${spoSurveyPercentChange > 0 ? 'var(--success)' : spoSurveyPercentChange < 0 ? 'var(--danger)' : 'var(--gray)'};">${fmtPctDelta(spoSurveyPercentChange)} п.п.</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="stat-footer" style="display:flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
-                            <div style="display:flex; gap: 8px; font-size: 11px; flex-wrap: wrap;">
-                                <span class="badge badge-neutral">ПУ: ${prevTotal.toLocaleString()} → ${baseTotal.toLocaleString()}</span>
-                                <span class="badge badge-neutral">В опросе: ${prevSurvey.toLocaleString()} → ${baseSurvey.toLocaleString()}</span>
-                            </div>
-                            <button class="btn btn-outline btn-sm" onclick="app.openMonthlyReportModal()">
-                                <i class="fas fa-chart-line"></i> Месячный анализ
-                            </button>
                         </div>
                     </div>
                 `;
-
 
                 return card;
             }
