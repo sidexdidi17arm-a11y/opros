@@ -1257,80 +1257,6 @@
             cursor: not-allowed !important;
         }
     </style>
-
-    <style>
-        /* Excel-like weekly delta table (card: Изменения ПУ) */
-        .excel-mini-title {
-            font-size: 12px;
-            font-weight: 800;
-            color: var(--dark);
-            margin: 0 0 8px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .excel-like-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-            font-size: 12px;
-        }
-
-        .excel-like-table th,
-        .excel-like-table td {
-            border: 1px solid #e2e8f0;
-            padding: 6px 8px;
-            vertical-align: middle;
-            word-wrap: break-word;
-        }
-
-        .excel-like-table th {
-            background: #f8fafc;
-            color: var(--dark);
-            font-weight: 800;
-            text-align: left;
-        }
-
-        .excel-like-table td.num,
-        .excel-like-table th.num {
-            text-align: right;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .excel-like-table--mini td {
-            padding: 5px 8px;
-        }
-
-        .excel-like-table--mini td:first-child {
-            width: 70%;
-        }
-
-        .excel-like-table--mini td:last-child {
-            width: 30%;
-        }
-
-        .delta {
-            font-weight: 900;
-        }
-
-        .delta-positive { color: var(--success); }
-        .delta-negative { color: var(--danger); }
-        .delta-neutral { color: var(--gray); }
-
-        /* For "ПУ не в опросе" positive is bad (highlight red) */
-        .delta-bad-positive { color: var(--danger); }
-        .delta-good-negative { color: var(--success); }
-
-        .excel-details {
-            margin-top: 10px;
-        }
-
-        .excel-more-btn {
-            margin-top: 10px;
-            width: 100%;
-        }
-    </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -1411,6 +1337,40 @@
         <div id="stats" class="tab-content" style="display: none;">
             <!-- Statistics Cards -->
             <div class="stats-grid" id="statsGrid"></div>
+            <!-- Weekly Difference Details Card (Excel-like) -->
+            <div class="stat-card" id="weeklyDiffDetailsCard" style="display:none; grid-column: 1 / -1;">
+                <div class="stat-header">
+                    <div class="stat-title">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #92400e;">
+                            <i class="fas fa-table"></i>
+                        </div>
+                        <div>
+                            <div>Подробные данные за неделю</div>
+                            <div class="stat-date" id="weeklyDiffDetailsDates">(—)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-content" style="padding-top: 0;">
+                    <div class="table-container" style="max-height: 520px;">
+                        <table class="comparison-table" id="weeklyDiffDetailsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">№</th>
+                                    <th>РЭС</th>
+                                    <th>ВСЕГО ПУ</th>
+                                    <th>ПУ В Опросе</th>
+                                    <th>% Опроса (за неделю)</th>
+                                    <th>СПОДЭС - ПУ</th>
+                                    <th>СПОДЭС - ПУ В Опросе</th>
+                                    <th>% Опроса (СПОДЭС)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="weeklyDiffDetailsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
 
             <!-- Detailed Table -->
             <div class="detailed-comparison">
@@ -1419,7 +1379,6 @@
                     Подробные данные за неделю
                     <span id="currentWeekLabel" style="font-size: 16px; color: var(--gray); font-weight: 600;"></span>
                 </h3>
-                <div id="weeklyExcelDetailsHost" class="stat-card excel-details-card" style="display:none; margin-top: 12px;"></div>
                 <div class="table-container">
                     <table class="comparison-table" id="detailedTable">
                         <thead>
@@ -1864,7 +1823,73 @@
             }
             
             async init() {
-                this.setupEventListeners();
+                this.
+            showWeeklyDiffDetails(currentDate, previousDate) {
+                try {
+                    const card = document.getElementById('weeklyDiffDetailsCard');
+                    const datesEl = document.getElementById('weeklyDiffDetailsDates');
+                    const tbody = document.getElementById('weeklyDiffDetailsBody');
+                    if (!card || !tbody) return;
+
+                    const currentWeek = this.weeklyData.find(w => w.date === currentDate);
+                    const previousWeek = this.weeklyData.find(w => w.date === previousDate);
+                    if (!currentWeek || !previousWeek) {
+                        this.showNotification('Не найдены данные для выбранных недель!', 'warning');
+                        return;
+                    }
+
+                    const prevLabel = this.formatDate(new Date(previousWeek.date));
+                    const currLabel = this.formatDate(new Date(currentWeek.date));
+                    if (datesEl) datesEl.textContent = `(${prevLabel} − ${currLabel})`;
+
+                    const currentMap = new Map((currentWeek.data || []).map(x => [x.id, x]));
+                    const previousMap = new Map((previousWeek.data || []).map(x => [x.id, x]));
+
+                    const rows = [];
+                    (currentWeek.data || []).forEach(item => {
+                        if (item.isPsRes) return;
+                        const prev = previousMap.get(item.id) || {};
+                        const curr = item || {};
+                        rows.push({
+                            id: item.id,
+                            name: item.name,
+                            total: (curr.total || 0) - (prev.total || 0),
+                            survey: (curr.survey || 0) - (prev.survey || 0),
+                            percent: ((curr.percent || 0) - (prev.percent || 0)) * 100,
+                            totalSpo: (curr.totalSpo || 0) - (prev.totalSpo || 0),
+                            surveySpo: (curr.surveySpo || 0) - (prev.surveySpo || 0),
+                            percentSpo: ((curr.percentSpo || 0) - (prev.percentSpo || 0)) * 100
+                        });
+                    });
+
+                    tbody.innerHTML = rows.map((r, idx) => {
+                        const fmtInt = (n) => (n || 0).toLocaleString();
+                        const fmtPct = (n) => `${(n || 0).toFixed(2)}`;
+                        const sign = (n) => (n > 0 ? '+' : '');
+                        return `
+                            <tr>
+                                <td>${idx + 1}</td>
+                                <td style="font-weight: 600;">${r.name}</td>
+                                <td class="${r.total > 0 ? 'positive' : r.total < 0 ? 'negative' : ''}">${sign(r.total)}${fmtInt(r.total)}</td>
+                                <td class="${r.survey > 0 ? 'positive' : r.survey < 0 ? 'negative' : ''}">${sign(r.survey)}${fmtInt(r.survey)}</td>
+                                <td class="${r.percent > 0 ? 'positive' : r.percent < 0 ? 'negative' : ''}">${sign(r.percent)}${fmtPct(r.percent)}</td>
+                                <td class="${r.totalSpo > 0 ? 'positive' : r.totalSpo < 0 ? 'negative' : ''}">${sign(r.totalSpo)}${fmtInt(r.totalSpo)}</td>
+                                <td class="${r.surveySpo > 0 ? 'positive' : r.surveySpo < 0 ? 'negative' : ''}">${sign(r.surveySpo)}${fmtInt(r.surveySpo)}</td>
+                                <td class="${r.percentSpo > 0 ? 'positive' : r.percentSpo < 0 ? 'negative' : ''}">${sign(r.percentSpo)}${fmtPct(r.percentSpo)}</td>
+                            </tr>
+                        `;
+                    }).join('');
+
+                    card.style.display = 'block';
+                    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                } catch (e) {
+                    console.error(e);
+                    this.showNotification('Ошибка формирования подробных данных', 'danger');
+                }
+            }
+
+setupEventListeners();
                 await this.checkLogin();
                 await this.checkServerConnection();
                 this.initializeInputGrid();
@@ -2994,7 +3019,7 @@
             createChangesCard() {
                 const card = document.createElement('div');
                 card.className = 'stat-card';
-
+                
                 if (this.weeklyData.length < 2) {
                     card.innerHTML = `
                         <div class="stat-header">
@@ -3021,58 +3046,49 @@
                     `;
                     return card;
                 }
+                
+                const currentWeek = this.weeklyData[0];
+                const previousWeek = this.weeklyData[1];
+                
+                const currentTotal = currentWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.total, 0);
+                const previousTotal = previousWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.total, 0);
+                const totalChange = currentTotal - previousTotal;
+                
+                const currentSurvey = currentWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.survey, 0);
+                const previousSurvey = previousWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.survey, 0);
+                const surveyChange = currentSurvey - previousSurvey;
+                
+                const currentSpoTotal = currentWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.totalSpo, 0);
+                const previousSpoTotal = previousWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.totalSpo, 0);
+                const spoTotalChange = currentSpoTotal - previousSpoTotal;
+                
+                const currentSpoSurvey = currentWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.surveySpo, 0);
+                const previousSpoSurvey = previousWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.surveySpo, 0);
+                const spoSurveyChange = currentSpoSurvey - previousSpoSurvey;
+                
+                const currentSpoNotInSurvey = currentWeek.data.filter(item => !item.isPsRes)
+                    .reduce((sum, item) => sum + (typeof item.spoNotInSurvey === 'number' ? item.spoNotInSurvey : Math.max(0, (item.totalSpo || 0) - (item.surveySpo || 0))), 0);
+                const previousSpoNotInSurvey = previousWeek.data.filter(item => !item.isPsRes)
+                    .reduce((sum, item) => sum + (typeof item.spoNotInSurvey === 'number' ? item.spoNotInSurvey : Math.max(0, (item.totalSpo || 0) - (item.surveySpo || 0))), 0);
+                const spoNotInSurveyChange = previousSpoNotInSurvey - currentSpoNotInSurvey;
 
-                // "Прошедшая неделя" — это предыдущая относительно самой свежей недели в базе (если есть 3+ недель данных)
-                const hasPastWeek = this.weeklyData.length >= 3;
-                const baseWeek = hasPastWeek ? this.weeklyData[1] : this.weeklyData[0];   // прошедшая неделя
-                const prevWeek = hasPastWeek ? this.weeklyData[2] : this.weeklyData[1];   // неделя до неё
+                
 
-                const sumNonPs = (week, field) => week.data
-                    .filter(item => !item.isPsRes)
-                    .reduce((sum, item) => sum + (typeof item[field] === 'number' ? item[field] : 0), 0);
+                const currentPercent = currentTotal > 0 ? (currentSurvey / currentTotal) * 100 : 0;
+                const previousPercent = previousTotal > 0 ? (previousSurvey / previousTotal) * 100 : 0;
+                const percentChange = currentPercent - previousPercent;
 
-                const baseTotal = sumNonPs(baseWeek, 'total');
-                const prevTotal = sumNonPs(prevWeek, 'total');
-                const totalChange = baseTotal - prevTotal;
+                const currentTotalSpo = currentWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + (item.totalSpo || 0), 0);
+                const previousTotalSpo = previousWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + (item.totalSpo || 0), 0);
+                const totalSpoChange = currentTotalSpo - previousTotalSpo;
 
-                const baseSurvey = sumNonPs(baseWeek, 'survey');
-                const prevSurvey = sumNonPs(prevWeek, 'survey');
-                const surveyChange = baseSurvey - prevSurvey;
+                const currentSurveySpo = currentWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + (item.surveySpo || 0), 0);
+                const previousSurveySpo = previousWeek.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + (item.surveySpo || 0), 0);
+                const surveySpoChange = currentSurveySpo - previousSurveySpo;
 
-                const baseNotInSurvey = Math.max(0, baseTotal - baseSurvey);
-                const prevNotInSurvey = Math.max(0, prevTotal - prevSurvey);
-                const notInSurveyChange = baseNotInSurvey - prevNotInSurvey;
-
-                const baseSurveyPercent = baseTotal > 0 ? (baseSurvey / baseTotal) * 100 : 0;
-                const prevSurveyPercent = prevTotal > 0 ? (prevSurvey / prevTotal) * 100 : 0;
-                const surveyPercentChange = baseSurveyPercent - prevSurveyPercent;
-
-                // СПОДЭС
-                const baseSpoTotal = sumNonPs(baseWeek, 'totalSpo');
-                const prevSpoTotal = sumNonPs(prevWeek, 'totalSpo');
-                const spoTotalChange = baseSpoTotal - prevSpoTotal;
-
-                const baseSpoSurvey = sumNonPs(baseWeek, 'surveySpo');
-                const prevSpoSurvey = sumNonPs(prevWeek, 'surveySpo');
-                const spoSurveyChange = baseSpoSurvey - prevSpoSurvey;
-
-                const baseSpoSurveyPercent = baseSpoTotal > 0 ? (baseSpoSurvey / baseSpoTotal) * 100 : 0;
-                const prevSpoSurveyPercent = prevSpoTotal > 0 ? (prevSpoSurvey / prevSpoTotal) * 100 : 0;
-                const spoSurveyPercentChange = baseSpoSurveyPercent - prevSpoSurveyPercent;
-
-                const fmtInt = (n) => (Number.isFinite(n) ? Math.round(n).toLocaleString() : '0');
-                const fmtDelta = (n) => `${n > 0 ? '+' : ''}${fmtInt(n)}`;
-                const fmtPct = (p) => (Number.isFinite(p) ? p.toFixed(2) : '0.00');
-                const fmtPctDelta = (p) => `${p > 0 ? '+' : ''}${fmtPct(p)}`;
-
-                const baseDateStr = this.formatDate(new Date(baseWeek.date || baseWeek.timestamp));
-                const prevDateStr = this.formatDate(new Date(prevWeek.date || prevWeek.timestamp));
-
-                // Визуально: копия блока Excel «Разница за неделю» + кнопка «Подробнее» (без изменения логики расчёта)
-                const deltaClass = (n) => n > 0 ? 'delta-positive' : n < 0 ? 'delta-negative' : 'delta-neutral';
-                const deltaNotInSurveyClass = (n) => n > 0 ? 'delta-bad-positive' : n < 0 ? 'delta-good-negative' : 'delta-neutral';
-                const detailsId = 'weeklyExcelDetailsHost';
-                const detailsBtnId = 'weeklyChangesDetailsBtn';
+                const currentPercentSpo = currentTotalSpo > 0 ? (currentSurveySpo / currentTotalSpo) * 100 : 0;
+                const previousPercentSpo = previousTotalSpo > 0 ? (previousSurveySpo / previousTotalSpo) * 100 : 0;
+                const percentSpoChange = currentPercentSpo - previousPercentSpo;
 
                 card.innerHTML = `
                     <div class="stat-header">
@@ -3082,212 +3098,51 @@
                             </div>
                             <div>
                                 <div>Изменения ПУ</div>
-                                <div class="stat-date">${baseDateStr} − ${prevDateStr}</div>
+                                <div class="stat-date">${this.formatDate(new Date(previousWeek.date))} − ${this.formatDate(new Date(currentWeek.date))}</div>
                             </div>
                         </div>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-main">
-                            <div class="excel-mini-title">
-                                <i class="fas fa-table"></i> Разница за неделю
+                        <div class="stat-details" style="grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                            <div class="stat-detail-item">
+                                <div class="stat-detail-value ${totalChange > 0 ? 'positive' : totalChange < 0 ? 'negative' : ''}">
+                                    ${totalChange > 0 ? '+' : ''}${totalChange.toLocaleString()}
+                                </div>
+                                <div class="stat-detail-label">Разница: всего ПУ</div>
                             </div>
-                            <table class="excel-like-table excel-like-table--mini" aria-label="Разница за неделю">
-                                <tbody>
-                                    <tr>
-                                        <td>Всего ПУ</td>
-                                        <td class="num"><span class="delta ${deltaClass(totalChange)}">${fmtDelta(totalChange)}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>ПУ в опросе</td>
-                                        <td class="num"><span class="delta ${deltaClass(surveyChange)}">${fmtDelta(surveyChange)}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>ПУ не в опросе (счётчики)</td>
-                                        <td class="num"><span class="delta ${deltaNotInSurveyClass(notInSurveyChange)}">${fmtDelta(notInSurveyChange)}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>% опроса</td>
-                                        <td class="num"><span class="delta ${deltaClass(surveyPercentChange)}">${fmtPctDelta(surveyPercentChange)} п.п.</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>СПОДЭС — всего ПУ</td>
-                                        <td class="num"><span class="delta ${deltaClass(spoTotalChange)}">${fmtDelta(spoTotalChange)}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>СПОДЭС — ПУ в опросе</td>
-                                        <td class="num"><span class="delta ${deltaClass(spoSurveyChange)}">${fmtDelta(spoSurveyChange)}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>% опроса СПОДЭС</td>
-                                        <td class="num"><span class="delta ${deltaClass(spoSurveyPercentChange)}">${fmtPctDelta(spoSurveyPercentChange)} п.п.</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-
-                            <button class="btn btn-outline btn-sm excel-more-btn" id="${detailsBtnId}" onclick="app.toggleWeeklyChangesDetails('${detailsId}', '${detailsBtnId}')">
-                                <i class="fas fa-ellipsis-h"></i> Подробнее
-                            </button>
-<table class="excel-like-table" aria-label="Подробные данные за неделю">
-                                    <thead>
-                                        <tr>
-                                            <th>Показатель</th>
-                                            <th class="num">${prevDateStr}</th>
-                                            <th class="num">${baseDateStr}</th>
-                                            <th class="num">Разница</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>Всего ПУ</td>
-                                            <td class="num">${prevTotal.toLocaleString()}</td>
-                                            <td class="num">${baseTotal.toLocaleString()}</td>
-                                            <td class="num"><span class="delta ${deltaClass(totalChange)}">${fmtDelta(totalChange)}</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>ПУ в опросе</td>
-                                            <td class="num">${prevSurvey.toLocaleString()}</td>
-                                            <td class="num">${baseSurvey.toLocaleString()}</td>
-                                            <td class="num"><span class="delta ${deltaClass(surveyChange)}">${fmtDelta(surveyChange)}</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>ПУ не в опросе (счётчики)</td>
-                                            <td class="num">${prevNotInSurvey.toLocaleString()}</td>
-                                            <td class="num">${baseNotInSurvey.toLocaleString()}</td>
-                                            <td class="num"><span class="delta ${deltaNotInSurveyClass(notInSurveyChange)}">${fmtDelta(notInSurveyChange)}</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>% опроса</td>
-                                            <td class="num">${fmtPct(prevSurveyPercent)}%</td>
-                                            <td class="num">${fmtPct(baseSurveyPercent)}%</td>
-                                            <td class="num"><span class="delta ${deltaClass(surveyPercentChange)}">${fmtPctDelta(surveyPercentChange)} п.п.</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>СПОДЭС — всего ПУ</td>
-                                            <td class="num">${prevSpoTotal.toLocaleString()}</td>
-                                            <td class="num">${baseSpoTotal.toLocaleString()}</td>
-                                            <td class="num"><span class="delta ${deltaClass(spoTotalChange)}">${fmtDelta(spoTotalChange)}</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>СПОДЭС — ПУ в опросе</td>
-                                            <td class="num">${prevSpoSurvey.toLocaleString()}</td>
-                                            <td class="num">${baseSpoSurvey.toLocaleString()}</td>
-                                            <td class="num"><span class="delta ${deltaClass(spoSurveyChange)}">${fmtDelta(spoSurveyChange)}</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>% опроса СПОДЭС</td>
-                                            <td class="num">${fmtPct(prevSpoSurveyPercent)}%</td>
-                                            <td class="num">${fmtPct(baseSpoSurveyPercent)}%</td>
-                                            <td class="num"><span class="delta ${deltaClass(spoSurveyPercentChange)}">${fmtPctDelta(spoSurveyPercentChange)} п.п.</span></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="stat-detail-item">
+                                <div class="stat-detail-value ${surveyChange > 0 ? 'positive' : surveyChange < 0 ? 'negative' : ''}">
+                                    ${surveyChange > 0 ? '+' : ''}${surveyChange.toLocaleString()}
+                                </div>
+                                <div class="stat-detail-label">Разница: ПУ в опросе</div>
                             </div>
-                        </div>
-                        <div class="stat-footer" style="display:flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <div style="display:flex; gap: 8px; font-size: 11px; flex-wrap: wrap;">
-                                <span class="badge badge-neutral">ПУ: ${prevTotal.toLocaleString()} → ${baseTotal.toLocaleString()}</span>
-                                <span class="badge badge-neutral">В опросе: ${prevSurvey.toLocaleString()} → ${baseSurvey.toLocaleString()}</span>
+                            <div class="stat-detail-item">
+                                <div class="stat-detail-value ${percentChange > 0 ? 'positive' : percentChange < 0 ? 'negative' : ''}">
+                                    ${percentChange > 0 ? '+' : ''}${percentChange.toFixed(2)} п.п.
+                                </div>
+                                <div class="stat-detail-label">Разница: % опроса</div>
                             </div>
-                            <button class="btn btn-outline btn-sm" onclick="app.openMonthlyReportModal()">
-                                <i class="fas fa-chart-line"></i> Месячный анализ
-                            </button>
                         </div>
                     </div>
-                
-
-                // Рендер подробных данных (как в Excel) в отдельной карточке ниже, а не внутри этой карточки
-                const detailsHost = document.getElementById(detailsId);
-                const weekLabel = document.getElementById('currentWeekLabel');
-                if (weekLabel) {
-                    weekLabel.textContent = `(${baseDateStr} − ${prevDateStr})`;
-                }
-                if (detailsHost) {
-                    detailsHost.innerHTML = `
-                        <div class="stat-header">
-                            <div class="stat-title">
-                                <div class="stat-icon">
-                                    <i class="fas fa-list"></i>
-                                </div>
-                                <div>
-                                    <div>Подробные данные за неделю</div>
-                                    <div class="stat-date">(${baseDateStr} − ${prevDateStr})</div>
-                                </div>
-                            </div>
+                    <div class="stat-footer">
+                        <div style="display:flex; gap: 8px; flex-wrap: wrap; font-size: 12px;">
+                            <span class="badge ${totalSpoChange > 0 ? 'badge-positive' : totalSpoChange < 0 ? 'badge-negative' : 'badge-neutral'}">
+                                СПОДЭС всего: ${totalSpoChange > 0 ? '+' : ''}${totalSpoChange.toLocaleString()}
+                            </span>
+                            <span class="badge ${surveySpoChange > 0 ? 'badge-positive' : surveySpoChange < 0 ? 'badge-negative' : 'badge-neutral'}">
+                                СПОДЭС в опросе: ${surveySpoChange > 0 ? '+' : ''}${surveySpoChange.toLocaleString()}
+                            </span>
+                            <span class="badge ${percentSpoChange > 0 ? 'badge-positive' : percentSpoChange < 0 ? 'badge-negative' : 'badge-neutral'}">
+                                % СПОДЭС: ${percentSpoChange > 0 ? '+' : ''}${percentSpoChange.toFixed(2)} п.п.
+                            </span>
                         </div>
-                        <div class="stat-content">
-                            <table class="excel-like-table" aria-label="Подробные данные за неделю">
-                                <thead>
-                                    <tr>
-                                        <th>Показатель</th>
-                                        <th class="num">${prevDateStr}</th>
-                                        <th class="num">${baseDateStr}</th>
-                                        <th class="num">Разница</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Всего ПУ</td>
-                                        <td class="num">${prevTotal.toLocaleString()}</td>
-                                        <td class="num">${baseTotal.toLocaleString()}</td>
-                                        <td class="num"><span class="delta ${deltaClass(totalChange)}">${fmtDelta(totalChange)}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>ПУ в опросе</td>
-                                        <td class="num">${prevSurvey.toLocaleString()}</td>
-                                        <td class="num">${baseSurvey.toLocaleString()}</td>
-                                        <td class="num"><span class="delta ${deltaClass(surveyChange)}">${fmtDelta(surveyChange)}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>ПУ не в опросе (счётчики)</td>
-                                        <td class="num">${prevNotInSurvey.toLocaleString()}</td>
-                                        <td class="num">${baseNotInSurvey.toLocaleString()}</td>
-                                        <td class="num"><span class="delta ${deltaClass(notInSurveyChange)}">${fmtDelta(notInSurveyChange)}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>% опроса</td>
-                                        <td class="num">${prevSurveyPercent.toFixed(2)}%</td>
-                                        <td class="num">${baseSurveyPercent.toFixed(2)}%</td>
-                                        <td class="num"><span class="delta ${deltaClass(surveyPercentChange)}">${fmtPctDelta(surveyPercentChange)} п.п.</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>СПОДЭС — всего ПУ</td>
-                                        <td class="num">${prevSpoTotal.toLocaleString()}</td>
-                                        <td class="num">${baseSpoTotal.toLocaleString()}</td>
-                                        <td class="num"><span class="delta ${deltaClass(spoTotalChange)}">${fmtDelta(spoTotalChange)}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>СПОДЭС — ПУ в опросе</td>
-                                        <td class="num">${prevSpoSurvey.toLocaleString()}</td>
-                                        <td class="num">${baseSpoSurvey.toLocaleString()}</td>
-                                        <td class="num"><span class="delta ${deltaClass(spoSurveyChange)}">${fmtDelta(spoSurveyChange)}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>% опроса СПОДЭС</td>
-                                        <td class="num">${prevSpoSurveyPercent.toFixed(2)}%</td>
-                                        <td class="num">${baseSpoSurveyPercent.toFixed(2)}%</td>
-                                        <td class="num"><span class="delta ${deltaClass(spoSurveyPercentChange)}">${fmtPctDelta(spoSurveyPercentChange)} п.п.</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-                }
-`;
+                        <button class="btn btn-outline btn-sm" onclick="app.showWeeklyDiffDetails('${currentWeek.date}', '${previousWeek.date}')">
+                            <i class="fas fa-info-circle"></i> Подробнее
+                        </button>
+                    </div>
+                `;
 
                 return card;
-            }
-
-            toggleWeeklyChangesDetails(detailsId, btnId) {
-                const details = document.getElementById(detailsId);
-                const btn = document.getElementById(btnId);
-                if (!details || !btn) return;
-
-                const isHidden = details.style.display === 'none' || details.style.display === '';
-                details.style.display = isHidden ? 'block' : 'none';
-                if (isHidden) { details.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-                btn.innerHTML = isHidden
-                    ? '<i class="fas fa-chevron-up"></i> Скрыть'
-                    : '<i class="fas fa-ellipsis-h"></i> Подробнее';
             }
             
             findBestWeek() {
