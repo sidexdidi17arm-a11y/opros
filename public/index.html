@@ -1419,6 +1419,7 @@
                     Подробные данные за неделю
                     <span id="currentWeekLabel" style="font-size: 16px; color: var(--gray); font-weight: 600;"></span>
                 </h3>
+                <div id="weeklyExcelDetailsHost" class="stat-card excel-details-card" style="display:none; margin-top: 12px;"></div>
                 <div class="table-container">
                     <table class="comparison-table" id="detailedTable">
                         <thead>
@@ -3064,13 +3065,13 @@
                 const fmtPct = (p) => (Number.isFinite(p) ? p.toFixed(2) : '0.00');
                 const fmtPctDelta = (p) => `${p > 0 ? '+' : ''}${fmtPct(p)}`;
 
-                const baseDateStr = this.formatDate(new Date(baseWeek.timestamp));
-                const prevDateStr = this.formatDate(new Date(prevWeek.timestamp));
+                const baseDateStr = this.formatDate(new Date(baseWeek.date || baseWeek.timestamp));
+                const prevDateStr = this.formatDate(new Date(prevWeek.date || prevWeek.timestamp));
 
                 // Визуально: копия блока Excel «Разница за неделю» + кнопка «Подробнее» (без изменения логики расчёта)
                 const deltaClass = (n) => n > 0 ? 'delta-positive' : n < 0 ? 'delta-negative' : 'delta-neutral';
                 const deltaNotInSurveyClass = (n) => n > 0 ? 'delta-bad-positive' : n < 0 ? 'delta-good-negative' : 'delta-neutral';
-                const detailsId = 'weeklyChangesDetails';
+                const detailsId = 'weeklyExcelDetailsHost';
                 const detailsBtnId = 'weeklyChangesDetailsBtn';
 
                 card.innerHTML = `
@@ -3126,12 +3127,7 @@
                             <button class="btn btn-outline btn-sm excel-more-btn" id="${detailsBtnId}" onclick="app.toggleWeeklyChangesDetails('${detailsId}', '${detailsBtnId}')">
                                 <i class="fas fa-ellipsis-h"></i> Подробнее
                             </button>
-
-                            <div id="${detailsId}" class="excel-details" style="display:none;">
-                                <div class="excel-mini-title" style="margin-top: 6px;">
-                                    <i class="fas fa-list"></i> Подробные данные за неделю
-                                </div>
-                                <table class="excel-like-table" aria-label="Подробные данные за неделю">
+<table class="excel-like-table" aria-label="Подробные данные за неделю">
                                     <thead>
                                         <tr>
                                             <th>Показатель</th>
@@ -3197,7 +3193,86 @@
                             </button>
                         </div>
                     </div>
-                `;
+                
+
+                // Рендер подробных данных (как в Excel) в отдельной карточке ниже, а не внутри этой карточки
+                const detailsHost = document.getElementById(detailsId);
+                const weekLabel = document.getElementById('currentWeekLabel');
+                if (weekLabel) {
+                    weekLabel.textContent = `(${baseDateStr} − ${prevDateStr})`;
+                }
+                if (detailsHost) {
+                    detailsHost.innerHTML = `
+                        <div class="stat-header">
+                            <div class="stat-title">
+                                <div class="stat-icon">
+                                    <i class="fas fa-list"></i>
+                                </div>
+                                <div>
+                                    <div>Подробные данные за неделю</div>
+                                    <div class="stat-date">(${baseDateStr} − ${prevDateStr})</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-content">
+                            <table class="excel-like-table" aria-label="Подробные данные за неделю">
+                                <thead>
+                                    <tr>
+                                        <th>Показатель</th>
+                                        <th class="num">${prevDateStr}</th>
+                                        <th class="num">${baseDateStr}</th>
+                                        <th class="num">Разница</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Всего ПУ</td>
+                                        <td class="num">${prevTotal.toLocaleString()}</td>
+                                        <td class="num">${baseTotal.toLocaleString()}</td>
+                                        <td class="num"><span class="delta ${deltaClass(totalChange)}">${fmtDelta(totalChange)}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>ПУ в опросе</td>
+                                        <td class="num">${prevSurvey.toLocaleString()}</td>
+                                        <td class="num">${baseSurvey.toLocaleString()}</td>
+                                        <td class="num"><span class="delta ${deltaClass(surveyChange)}">${fmtDelta(surveyChange)}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>ПУ не в опросе (счётчики)</td>
+                                        <td class="num">${prevNotInSurvey.toLocaleString()}</td>
+                                        <td class="num">${baseNotInSurvey.toLocaleString()}</td>
+                                        <td class="num"><span class="delta ${deltaClass(notInSurveyChange)}">${fmtDelta(notInSurveyChange)}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>% опроса</td>
+                                        <td class="num">${prevSurveyPercent.toFixed(2)}%</td>
+                                        <td class="num">${baseSurveyPercent.toFixed(2)}%</td>
+                                        <td class="num"><span class="delta ${deltaClass(surveyPercentChange)}">${fmtPctDelta(surveyPercentChange)} п.п.</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>СПОДЭС — всего ПУ</td>
+                                        <td class="num">${prevSpoTotal.toLocaleString()}</td>
+                                        <td class="num">${baseSpoTotal.toLocaleString()}</td>
+                                        <td class="num"><span class="delta ${deltaClass(spoTotalChange)}">${fmtDelta(spoTotalChange)}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>СПОДЭС — ПУ в опросе</td>
+                                        <td class="num">${prevSpoSurvey.toLocaleString()}</td>
+                                        <td class="num">${baseSpoSurvey.toLocaleString()}</td>
+                                        <td class="num"><span class="delta ${deltaClass(spoSurveyChange)}">${fmtDelta(spoSurveyChange)}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>% опроса СПОДЭС</td>
+                                        <td class="num">${prevSpoSurveyPercent.toFixed(2)}%</td>
+                                        <td class="num">${baseSpoSurveyPercent.toFixed(2)}%</td>
+                                        <td class="num"><span class="delta ${deltaClass(spoSurveyPercentChange)}">${fmtPctDelta(spoSurveyPercentChange)} п.п.</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+`;
 
                 return card;
             }
@@ -3209,6 +3284,7 @@
 
                 const isHidden = details.style.display === 'none' || details.style.display === '';
                 details.style.display = isHidden ? 'block' : 'none';
+                if (isHidden) { details.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
                 btn.innerHTML = isHidden
                     ? '<i class="fas fa-chevron-up"></i> Скрыть'
                     : '<i class="fas fa-ellipsis-h"></i> Подробнее';
