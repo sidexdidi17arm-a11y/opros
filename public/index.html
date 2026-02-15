@@ -1663,27 +1663,24 @@
                                     </select>
                                 </div>
 
-                                <div id="customDateRange" style="display: none; margin-bottom: 15px;">
-                                    <div style="display: flex; gap: 10px;">
-                                        <div style="flex: 1;">
-                                            <label for="customStartWeekSelect" style="font-size: 12px; color: var(--gray); margin-bottom: 6px; display: block;">
-                                                Начальная неделя:
-                                            </label>
-                                            <select id="customStartWeekSelect" class="form-control">
-                                                <option value="">Выберите неделю...</option>
-                                            </select>
+                                <div id="customDateRange" style="display: none; margin-bottom: 20px;">
+                                    <div class="date-range-group">
+                                        <div style="font-size: 13px; font-weight: 600; color: var(--dark); margin-bottom: 10px;">
+                                            <i class="fas fa-calendar"></i> Выберите диапазон дат:
                                         </div>
-                                        <div style="flex: 1;">
-                                            <label for="customEndWeekSelect" style="font-size: 12px; color: var(--gray); margin-bottom: 6px; display: block;">
-                                                Конечная неделя:
-                                            </label>
-                                            <select id="customEndWeekSelect" class="form-control">
-                                                <option value="">Выберите неделю...</option>
-                                            </select>
+                                        <div class="date-inputs">
+                                            <div class="date-input-item">
+                                                <label for="monthStartDate">Начало периода</label>
+                                                <input type="date" id="monthStartDate" class="form-control">
+                                            </div>
+                                            <div class="date-input-item">
+                                                <label for="monthEndDate">Конец периода</label>
+                                                <input type="date" id="monthEndDate" class="form-control">
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div style="margin-top: 10px; font-size: 12px; color: var(--gray); display: flex; align-items: center; gap: 6px;">
-                                        <i class="fas fa-info-circle"></i> Будет включено от 2 до 12 недель
+                                        <div style="font-size: 12px; color: var(--gray); margin-top: 10px; display: flex; align-items: center; gap: 6px;">
+                                            <i class="fas fa-info-circle"></i> Будет включено от 2 до 12 недель
+                                        </div>
                                     </div>
                                 </div>
 
