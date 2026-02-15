@@ -3607,8 +3607,47 @@ event.currentTarget.classList.add('active');
                         this.verticalChart = null;
                     }
                     
+                    
+
+// Plugin: draw percentage labels inside colored bars
+const barValueLabels = {
+    id: 'barValueLabels',
+    afterDatasetsDraw(chart, args, pluginOptions) {
+        const { ctx } = chart;
+        ctx.save();
+        ctx.font = '600 11px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+            const meta = chart.getDatasetMeta(datasetIndex);
+            if (meta.hidden) return;
+
+            meta.data.forEach((bar, index) => {
+                const value = dataset.data[index];
+                if (value === null || value === undefined) return;
+                const label = `${Number(value).toFixed(0)}%`;
+
+                const x = bar.x;
+                // place label inside bar near the top, but still inside
+                const y = bar.y + 12;
+
+                // draw with subtle shadow for readability on bright colors
+                ctx.fillStyle = 'rgba(255,255,255,0.95)';
+                ctx.shadowColor = 'rgba(0,0,0,0.25)';
+                ctx.shadowBlur = 3;
+                ctx.fillText(label, x, y);
+
+                // reset shadow for next draw
+                ctx.shadowBlur = 0;
+            });
+        });
+        ctx.restore();
+    }
+};
                     this.verticalChart = new Chart(ctx, {
                         type: 'bar',
+                        plugins: [barValueLabels],
                         data: {
                             labels: resNames,
                             datasets: datasets
@@ -3622,15 +3661,8 @@ event.currentTarget.classList.add('active');
                                     min: 80,
                                     max: 100,
                                     ticks: {
-                                        mirror: true,
-                                        padding: -10,
-                                        callback: function(value) {
-                                            return value + '%';
-                                        },
-                                        font: {
-                                            size: 12,
-                                            weight: '600'
-                                        }
+                                        callback: function(value) { return value + '%'; },
+                                        font: { size: 12, weight: '600' }
                                     },
                                     grid: {
                                         color: 'rgba(0, 0, 0, 0.05)'
