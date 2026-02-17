@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -4426,7 +4426,7 @@ break;
                     const link = document.createElement('a');
                     const url = URL.createObjectURL(blob);
                     link.setAttribute('href', url);
-                    link.setAttribute('download', `отчет_опрос_фес_${reportDate}.html`);
+                    link.setAttribute('download', `отчет_опрос_рэс_${reportDate}.html`);
                     link.style.display = 'none';
                     document.body.appendChild(link);
                     link.click();
@@ -4585,7 +4585,7 @@ break;
                     const link = document.createElement('a');
                     const url = URL.createObjectURL(blob);
                     link.setAttribute('href', url);
-                    link.setAttribute('download', `аналитический_отчет_фес_${this.formatDate(new Date(firstWeek.date))}_${this.formatDate(new Date(lastWeek.date))}.html`);
+                    link.setAttribute('download', `аналитический_отчет_рэс_${this.formatDate(new Date(firstWeek.date))}_${this.formatDate(new Date(lastWeek.date))}.html`);
                     link.style.display = 'none';
                     document.body.appendChild(link);
                     link.click();
@@ -5454,7 +5454,7 @@ break;
                     const url = URL.createObjectURL(blob);
                     link.setAttribute('href', url);
                     
-                    let fileName = 'месячный_анализ_опрос_фес';
+                    let fileName = 'месячный_анализ_опрос_рэс';
                     if (periodType === 'custom') {
                         const startDate = document.getElementById('monthStartDate')?.value;
                         const endDate = document.getElementById('monthEndDate')?.value;
