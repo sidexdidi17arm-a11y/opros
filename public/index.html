@@ -1837,14 +1837,14 @@
         // Конфигурация приложения
         const AppConfig = {
             RES_LIST: [
-                { id: 'adler', name: 'Адлерский ', color: '#1e40af' },
-                { id: 'dagomys', name: 'Дагомысский ', color: '#0ea5e9' },
-                { id: 'krasnopolyansky', name: 'Краснополянский ', color: '#8b5cf6' },
-                { id: 'lazarevsky', name: 'Лазаревский ', color: '#06b6d4' },
-                { id: 'sochi', name: 'Сочинский ', color: '#3b82f6' },
-                { id: 'tuapse', name: 'Туапсинский ', color: '#6366f1' },
-                { id: 'hostinsky', name: 'Хостинский ', color: '#2563eb' },
-                { id: 'ps', name: 'ПС ', color: '#7c3aed', isPsRes: true }
+                { id: 'adler', name: 'Адлерский РЭС', color: '#1e40af' },
+                { id: 'dagomys', name: 'Дагомысский РЭС', color: '#0ea5e9' },
+                { id: 'krasnopolyansky', name: 'Краснополянский РЭС', color: '#8b5cf6' },
+                { id: 'lazarevsky', name: 'Лазаревский РЭС', color: '#06b6d4' },
+                { id: 'sochi', name: 'Сочинский РЭС', color: '#3b82f6' },
+                { id: 'tuapse', name: 'Туапсинский РЭС', color: '#6366f1' },
+                { id: 'hostinsky', name: 'Хостинский РЭС', color: '#2563eb' },
+                { id: 'ps', name: 'ПС РЭС', color: '#7c3aed', isPsRes: true }
             ],
             
             USERS: {
@@ -3074,7 +3074,7 @@ break;
                 const prevLabel = this.formatDate(new Date(previousWeek.date));
                 const currLabel = this.formatDate(new Date(currentWeek.date));
 
-                // Итого (по всем РЭС, включая ПС РЭС)
+                // Итого (по всем , включая ПС )
                 const sum = (arr, key) => arr.reduce((s, x) => s + (parseInt(x[key]) || 0), 0);
                 const curTotal = sum(currentWeek.data, 'total');
                 const prevTotal = sum(previousWeek.data, 'total');
@@ -3192,7 +3192,7 @@ break;
                         mount.appendChild(card);
                     }
 
-                    // Сопоставление строк по имени РЭС
+                    // Сопоставление строк по имени 
                     const byName = (arr) => {
                         const m = new Map();
                         (arr || []).forEach(x => m.set(x.name, x));
@@ -3296,7 +3296,7 @@ break;
                                 <table class="excel-mini-table" aria-label="Разница за неделю (ПУ)" style="min-width: 920px;">
                                     <thead>
                                         <tr>
-                                            <th>РЭС</th>
+                                            <th></th>
                                             <th class="num">${prevLabel}<br>ВСЕГО</th>
                                             <th class="num">${currLabel}<br>ВСЕГО</th>
                                             <th class="num">Разница<br>ВСЕГО</th>
@@ -3321,7 +3321,7 @@ break;
                                 <table class="excel-mini-table" aria-label="Разница за неделю (СПОДЭС)" style="min-width: 920px;">
                                     <thead>
                                         <tr>
-                                            <th>РЭС</th>
+                                            <th></th>
                                             <th class="num">${prevLabel}<br>СПОДЭС - ПУ</th>
                                             <th class="num">${currLabel}<br>СПОДЭС - ПУ</th>
                                             <th class="num">Разница<br>СПОДЭС - ПУ</th>
