@@ -1396,7 +1396,7 @@
             <div class="login-logo">
                 <i class="fas fa-chart-network"></i>
             </div>
-            <h2 class="login-title">Статистика опроса по РЭС</h2>
+            <h2 class="login-title">Статистика опроса по </h2>
             <p class="login-subtitle">Войдите в систему для доступа к статистике опроса приборов учёта</p>
             
             <form class="login-form" id="loginForm">
@@ -1453,8 +1453,8 @@
                     <i class="fas fa-chart-network"></i>
                     ПАО "Россети-Юг"
                 </h1>
-                <div class="header-subtitle">Статистика опроса по РЭС</div>
-                <div class="header-description">Еженедельный мониторинг показателей опроса приборов учёта. ПС РЭС не учитывается в общих показателях.</div>
+                <div class="header-subtitle">Статистика опроса по </div>
+                <div class="header-description">Еженедельный мониторинг показателей опроса приборов учёта. ПС  не учитывается в общих показателях.</div>
             </div>
         </header>
 
@@ -1481,7 +1481,7 @@
                         <thead>
                             <tr>
                                 <th style="width: 50px;">№</th>
-                                <th>РЭС</th>
+                                <th></th>
                                 <th>Всего ПУ</th>
                                 <th>В Опросе</th>
                                 <th>Не в Опросе</th>
@@ -1502,7 +1502,7 @@
             <div class="chart-section">
                 <h4 class="chart-title">
                     <i class="fas fa-chart-bar"></i>
-                    Динамика процента опроса по РЭС (без ПС РЭС)
+                    Динамика процента опроса по  (без ПС )
                 </h4>
                 <div class="chart-wrapper">
                     <canvas id="verticalChart"></canvas>
@@ -1534,7 +1534,7 @@
 
                 <h4 style="margin: 30px 0 20px; color: var(--dark); font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 10px;">
                     <i class="fas fa-bolt"></i>
-                    Данные по РЭС
+                    Данные по 
                 </h4>
                 
                 <div class="input-grid" id="resInputGrid"></div>
@@ -1837,14 +1837,14 @@
         // Конфигурация приложения
         const AppConfig = {
             RES_LIST: [
-                { id: 'adler', name: 'Адлерский РЭС', color: '#1e40af' },
-                { id: 'dagomys', name: 'Дагомысский РЭС', color: '#0ea5e9' },
-                { id: 'krasnopolyansky', name: 'Краснополянский РЭС', color: '#8b5cf6' },
-                { id: 'lazarevsky', name: 'Лазаревский РЭС', color: '#06b6d4' },
-                { id: 'sochi', name: 'Сочинский РЭС', color: '#3b82f6' },
-                { id: 'tuapse', name: 'Туапсинский РЭС', color: '#6366f1' },
-                { id: 'hostinsky', name: 'Хостинский РЭС', color: '#2563eb' },
-                { id: 'ps', name: 'ПС РЭС', color: '#7c3aed', isPsRes: true }
+                { id: 'adler', name: 'Адлерский ', color: '#1e40af' },
+                { id: 'dagomys', name: 'Дагомысский ', color: '#0ea5e9' },
+                { id: 'krasnopolyansky', name: 'Краснополянский ', color: '#8b5cf6' },
+                { id: 'lazarevsky', name: 'Лазаревский ', color: '#06b6d4' },
+                { id: 'sochi', name: 'Сочинский ', color: '#3b82f6' },
+                { id: 'tuapse', name: 'Туапсинский ', color: '#6366f1' },
+                { id: 'hostinsky', name: 'Хостинский ', color: '#2563eb' },
+                { id: 'ps', name: 'ПС ', color: '#7c3aed', isPsRes: true }
             ],
             
             USERS: {
@@ -2071,7 +2071,7 @@
                 tabsContainer.innerHTML = '';
                 
                 const commonTabs = [
-                    { id: 'stats', icon: 'chart-bar', label: 'Статистика по РЭС' },
+                    { id: 'stats', icon: 'chart-bar', label: 'Статистика по ' },
                     { id: 'history', icon: 'history', label: 'История' },
                     { id: 'statistics', icon: 'chart-pie', label: 'Статистика' },
                     ];
