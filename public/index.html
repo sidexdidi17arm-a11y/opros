@@ -2402,16 +2402,48 @@ break;
                     return 'Ошибка даты';
                 }
             }
+
+            // Локальная дата в формате YYYY-MM-DD (без сдвига UTC)
+            toLocalISODate(date) {
+                try {
+                    if (!(date instanceof Date) || isNaN(date.getTime())) return '';
+                    const y = date.getFullYear();
+                    const m = String(date.getMonth() + 1).padStart(2, '0');
+                    const d = String(date.getDate()).padStart(2, '0');
+                    return `${y}-${m}-${d}`;
+                } catch (e) {
+                    return '';
+                }
+            }
             
             setDefaultDate() {
-                const today = new Date();
                 const dateInput = document.getElementById('dateInput');
                 if (dateInput) {
-                    const dayOfWeek = today.getDay();
-                    const diff = dayOfWeek === 6 ? 0 : dayOfWeek === 0 ? -6 : 6 - dayOfWeek;
-                    const lastSaturday = new Date(today);
-                    lastSaturday.setDate(today.getDate() - diff - 7);
-                    dateInput.value = lastSaturday.toISOString().split('T')[0];
+                    // По умолчанию выставляем сегодняшнюю дату, но разрешаем выбирать прошлые даты
+                    const applyNoFutureRule = () => {
+                        const today = this.toLocalISODate(new Date());
+                        dateInput.max = today; // запрещаем будущие даты
+                        if (dateInput.value && dateInput.value > today) {
+                            dateInput.value = today;
+                        }
+                    };
+
+                    // Стартовое значение календаря — сегодня
+                    dateInput.value = this.toLocalISODate(new Date());
+                    // Не ограничиваем прошлое
+                    dateInput.removeAttribute('min');
+                    // Запрещаем будущее
+                    applyNoFutureRule();
+
+                    // Если пользователь открывает календарь позже (например, после полуночи), обновляем max
+                    dateInput.addEventListener('focus', () => {
+                        const today = this.toLocalISODate(new Date());
+                        dateInput.max = today;
+                        if (!dateInput.value) dateInput.value = today;
+                    });
+
+                    dateInput.addEventListener('change', applyNoFutureRule);
+                    dateInput.addEventListener('input', applyNoFutureRule);
                 }
             }
             
@@ -2742,11 +2774,12 @@ break;
                     });
                     
                     const dateInput = document.getElementById('dateInput');
-                    if (dateInput && this.weeklyData.length > 0) {
-                        const lastDate = new Date(this.weeklyData[0].date);
-                        const nextWeek = new Date(lastDate);
-                        nextWeek.setDate(lastDate.getDate() + 7);
-                        dateInput.value = nextWeek.toISOString().split('T')[0];
+                    // После очистки формы всегда выставляем текущую дату отчёта (сегодня)
+                    if (dateInput) {
+                        const today = this.toLocalISODate(new Date());
+                        dateInput.value = today;
+                        dateInput.removeAttribute('min');
+                        dateInput.max = today; // запрещаем будущие даты
                     } else {
                         this.setDefaultDate();
                     }
