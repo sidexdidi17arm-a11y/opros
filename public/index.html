@@ -1476,7 +1476,7 @@
                     ПАО "Россети-Юг"
                 </h1>
                 <div class="header-subtitle">Статистика опроса по РЭС </div>
-                <div class="header-description">Еженедельный мониторинг показателей опроса приборов учёта. ПС  не учитывается в общих показателях.</div>
+                <div class="header-description">Еженедельный мониторинг показателей опроса приборов учёта. ПС РЭС  не учитывается в общих показателях.</div>
             </div>
         </header>
 
@@ -1524,7 +1524,7 @@
             <div class="chart-section">
                 <h4 class="chart-title">
                     <i class="fas fa-chart-bar"></i>
-                    Динамика процента опроса по  (без ПС )
+                    Динамика процента опроса по  (без ПС РЭС )
                 </h4>
                 <div class="chart-wrapper">
                     <canvas id="verticalChart"></canvas>
@@ -3129,7 +3129,7 @@ break;
                 const prevLabel = this.formatDate(new Date(previousWeek.date));
                 const currLabel = this.formatDate(new Date(currentWeek.date));
 
-                // Итого (по всем , включая ПС )
+                // Итого (по всем , включая ПС РЭС )
                 const sum = (arr, key) => arr.reduce((s, x) => s + (parseInt(x[key]) || 0), 0);
                 const curTotal = sum(currentWeek.data, 'total');
                 const prevTotal = sum(previousWeek.data, 'total');
@@ -4401,7 +4401,7 @@ break;
                             </div>
                             
                             <div class="summary">
-                                <h2>Итоги недели (без учета ПС РЭС)</h2>
+                                <h2>Итоги недели (Без учета ПС РЭС)</h2>
                                 <p>Всего опрошено ПУ: <strong>${weekData.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.survey, 0).toLocaleString()}</strong></p>
                                 <p>Всего ПУ в системе: <strong>${weekData.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.total, 0).toLocaleString()}</strong></p>
                                 <p>Средний процент опроса: <strong>${(weekData.data.filter(item => !item.isPsRes).reduce((sum, item) => sum + item.survey, 0) / 
