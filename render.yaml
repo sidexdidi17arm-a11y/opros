@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: opros-postgres-app
+    name: opros-neon-app
     env: node
     plan: free
     buildCommand: npm install
@@ -8,4 +8,6 @@ services:
     autoDeploy: true
     envVars:
       - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_PASSWORD
         sync: false
