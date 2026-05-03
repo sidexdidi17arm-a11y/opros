@@ -1922,8 +1922,16 @@
                 this.verticalChart = null;
                 this.currentUser = null;
                 this.apiBaseUrl = AppConfig.getApiBaseUrl();
+                this.adminPassword = (() => { try { return sessionStorage.getItem('opros_admin_password') || ''; } catch (_) { return ''; } })();
                 this.serverStatus = 'connecting';
                 this.init();
+            }
+
+            _writeHeaders() {
+                return {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Password': this.adminPassword || ''
+                };
             }
             
             async init() {
@@ -2210,6 +2218,8 @@
                             this.showNotification('Неверный пароль!', 'danger');
                             return;
                         }
+                        this.adminPassword = password;
+                        try { sessionStorage.setItem('opros_admin_password', password); } catch (_) {}
                     }
                     
                     if (username === 'viewer' && password !== '') {
@@ -2240,7 +2250,9 @@
             logout() {
                 if (confirm('Вы уверены, что хотите выйти из системы?')) {
                     this.currentUser = null;
+                    this.adminPassword = '';
                     localStorage.removeItem(AppConfig.STORAGE_KEYS.USER);
+                    try { sessionStorage.removeItem('opros_admin_password'); } catch (_) {}
                     this.showLogin();
                     this.showNotification('Вы успешно вышли из системы', 'info');
                 }
@@ -2715,9 +2727,7 @@ break;
     
                     const response = await fetch(`${this.apiBaseUrl}${AppConfig.API_ENDPOINTS.DATA}`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                        headers: this._writeHeaders(),
                         body: JSON.stringify(weekData)
                     });
 
@@ -3971,7 +3981,7 @@ break;
                     // Используем существующий механизм восстановления, чтобы сохранить оставшиеся недели
                     const response = await fetch(`${this.apiBaseUrl}${AppConfig.API_ENDPOINTS.DATA}/restore`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: this._writeHeaders(),
                         body: JSON.stringify(remaining)
                     });
                     
@@ -4007,7 +4017,8 @@ break;
                     }
                     
                     const response = await fetch(`${this.apiBaseUrl}${AppConfig.API_ENDPOINTS.DATA}`, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: this._writeHeaders()
                     });
                     
                     if (response.ok) {
@@ -4259,9 +4270,7 @@ break;
                     
                     const response = await fetch(`${this.apiBaseUrl}${AppConfig.API_ENDPOINTS.DATA}/restore`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                        headers: this._writeHeaders(),
                         body: JSON.stringify(backupData.data)
                     });
                     
